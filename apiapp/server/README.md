@@ -27,6 +27,10 @@ python predict_video_to_csv.py --video 1_video.mp4 --output output_video_analize
 python face_avatar_to_html.py --csv output_video_analize_nb.csv --source real --out avatar_face_nb_3.html --fps 10 --dpi 300 --size 400x500
 
 
+python face_avatar_to_html.py --csv output_video_analize_nb.csv --source real --out avatar_face_nb_4.html --fps 5 --dpi 300 --size 400x500
+
+
+
 
 
 
