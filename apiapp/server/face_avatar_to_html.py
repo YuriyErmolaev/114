@@ -21,8 +21,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
-# from celluloid import Camera  # Not used in HTML mode due to to_jshtml incompatibility here
-from matplotlib import animation as mpl_animation
+from celluloid import Camera
 
 # Optional progress bar
 try:
@@ -169,6 +168,7 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
     p.add_argument("--fps", default=10, type=int, help="Frames per second for animation")
     p.add_argument("--dpi", default=300, type=int, help="DPI for figure rendering")
     p.add_argument("--limit", type=int, default=None, help="Limit to first N frames")
+    p.add_argument("--step", type=int, default=1, help="Use every step-th frame (1 = no subsampling)")
     p.add_argument("--size", type=str, default="400x500", help="Figure size in pixels, WxH (e.g., 400x500)")
     p.add_argument("--title", type=str, default="AU Avatar", help="Figure title")
     p.add_argument("--bgcolor", type=str, default="white", help="Figure background color")
@@ -259,23 +259,21 @@ def _plot_face_fallback(ax, au_map: dict) -> None:
 
 
 def _try_plot_face(ax, au_map: dict, row: np.ndarray) -> None:
-    """Try py-feat's plot_face; fallback to our schematic face if unavailable/failed."""
-    if 'plot_face' in globals() and callable(plot_face):
+    """Call py-feat's plot_face with a couple of signature variants. Raise on failure."""
+    if not ('plot_face' in globals() and callable(plot_face)):
+        raise RuntimeError("py-feat not available; install py-feat and activate the correct environment.")
+    last_err: Optional[Exception] = None
+    for kwargs in (
+        {"model": None, "ax": ax, "au": au_map},
+        {"ax": ax, "au": au_map},
+        {"model": None, "ax": ax, "au": row},
+    ):
         try:
-            plot_face(model=None, ax=ax, au=au_map)
+            plot_face(**kwargs)  # type: ignore
             return
-        except Exception:
-            try:
-                plot_face(ax=ax, au=au_map)
-                return
-            except Exception:
-                try:
-                    plot_face(model=None, ax=ax, au=row)
-                    return
-                except Exception:
-                    pass
-    # Fallback
-    _plot_face_fallback(ax, au_map)
+        except Exception as e:
+            last_err = e
+    raise RuntimeError(f"feat.plotting.plot_face failed to render a frame: {last_err}")
 
 
 def main(argv: Optional[Sequence[str]] = None) -> int:
@@ -320,10 +318,20 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     values = values[:, order]
     au_names = [au_names[i] for i in order]
 
-    # Apply frame limit
+    # Apply frame limit then step
     if isinstance(args.limit, int) and args.limit is not None and args.limit > 0:
         values = values[: args.limit]
-
+    try:
+        step = int(args.step)
+    except Exception:
+        step = 1
+    if step < 1:
+        print("[error] --step must be a positive integer (>=1).", file=sys.stderr)
+        return 2
+    values = values[::step]
+    if values.shape[0] == 0:
+        print("[error] No frames to render after applying --limit/--step.", file=sys.stderr)
+        return 5
     n_frames, au_dim = values.shape
 
     # Prepare figure
@@ -353,10 +361,38 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     ax.set_axis_off()
     ax.set_title(args.title)
 
-    # Build animation using FuncAnimation for compatibility with to_jshtml
-    interval_ms = int(round(1000.0 / max(1, int(args.fps))))
+    # Validate that py-feat plot_face is available and works on a test frame
+    try:
+        test_row = values[0]
+        test_map = {name: float(val) for name, val in zip(au_names, test_row.tolist())}
+        _try_plot_face(ax, test_map, test_row)
+    except Exception as e:
+        print(f"[error] feat.plotting.plot_face is unavailable or failed on a test frame: {e}", file=sys.stderr)
+        return 2
+    # Clear and restore layout after test draw
+    ax.cla()
+    try:
+        ax.set_facecolor(args.bgcolor)
+    except Exception:
+        pass
+    ax.set_axis_off()
+    ax.set_title(args.title)
 
-    def _frame_setup():
+    # Pre-render all frames with Celluloid.Camera (notebook parity)
+    camera = Camera(fig)
+    iterator: Iterable = values
+    if not args.quiet:
+        iterator = tqdm(values, desc="Rendering frames", unit="f")
+
+    for row in iterator:
+        au_map = {name: float(val) for name, val in zip(au_names, row.tolist())}
+        try:
+            _try_plot_face(ax, au_map, row)
+        except Exception as e:
+            print(f"[error] plot_face failed while rendering a frame: {e}", file=sys.stderr)
+            return 2
+        camera.snap()
+        # Prepare for next frame: keep consistent layout
         ax.cla()
         try:
             ax.set_facecolor(args.bgcolor)
@@ -364,26 +400,9 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             pass
         ax.set_axis_off()
         ax.set_title(args.title)
-        return []
 
-    def _update(i: int):
-        _frame_setup()
-        row = values[i]
-        au_map = {name: float(val) for name, val in zip(au_names, row.tolist())}
-        _try_plot_face(ax, au_map, row)
-        # Return a list of artists if desired; with blit=False this can be empty
-        arts = []
-        try:
-            # Collect common artist containers
-            arts.extend(ax.artists)
-            arts.extend(ax.lines)
-            arts.extend(ax.patches)
-            arts.extend(ax.collections)
-        except Exception:
-            pass
-        return arts
-
-    anim = mpl_animation.FuncAnimation(fig, _update, frames=n_frames, interval=interval_ms, blit=False)
+    interval_ms = int(round(1000.0 / max(1, int(args.fps))))
+    anim = camera.animate(interval=interval_ms, blit=False)
 
     # Ensure output directory exists
     args.out.parent.mkdir(parents=True, exist_ok=True)
@@ -398,15 +417,19 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     # Write HTML (wrap in minimal HTML for standalone viewing)
     try:
         html = (
-            "<!DOCTYPE html>\n<html>\n<head>\n<meta charset=\"utf-8\">\n<title>AU Avatar</title>\n"
-            "</head>\n<body style=\"margin:0; background:#ffffff;\">\n" + html_snippet + "\n</body>\n</html>\n"
+            "<!DOCTYPE html>\n<html>\n<head>\n<meta charset=\"utf-8\">\n"
+            f"<title>{args.title}</title>\n"
+            "</head>\n"
+            f"<body style=\"margin:0; background:{args.bgcolor};\">\n"
+            + html_snippet +
+            "\n</body>\n</html>\n"
         )
         args.out.write_text(html, encoding="utf-8")
     except Exception as e:
         print(f"[error] Failed to write HTML to {args.out}: {e}", file=sys.stderr)
         return 7
 
-    print(f"Frames: {n_frames}, AUs: {au_dim}, size: {args.size} @ {args.dpi} dpi, saved to: {args.out}")
+    print(f"frames: {n_frames}, au_dim: {au_dim}, fps: {int(args.fps)}, out: {args.out}")
     return 0
 
 

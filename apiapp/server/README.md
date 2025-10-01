@@ -24,5 +24,6 @@ python face_avatar_from_csv.py --csv output_video_analize_2.csv --out avatar_fac
 python predict_video_to_csv.py --video 1_video.mp4 --output output_video_analize_nb.csv --skip-frames 25 --fps 25 --face-threshold 0.95
 
 
+python face_avatar_to_html.py --csv output_video_analize_nb.csv --source real --out avatar_face_nb_3.html --fps 10 --dpi 300 --size 400x500
 
 
