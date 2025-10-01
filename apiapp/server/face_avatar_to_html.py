@@ -261,7 +261,11 @@ def _plot_face_fallback(ax, au_map: dict) -> None:
 def _try_plot_face(ax, au_map: dict, row: np.ndarray) -> None:
     """Call py-feat's plot_face with a couple of signature variants. Raise on failure."""
     if not ('plot_face' in globals() and callable(plot_face)):
-        raise RuntimeError("py-feat not available; install py-feat and activate the correct environment.")
+        raise RuntimeError(
+            "py-feat (import name 'feat') is not available. Install dependencies and activate your venv, e.g.:\n"
+            "  pip install -r requirements.txt\n"
+            "If you install py-feat separately: pip install py-feat\n"
+        )
     last_err: Optional[Exception] = None
     for kwargs in (
         {"model": None, "ax": ax, "au": au_map},
@@ -273,7 +277,10 @@ def _try_plot_face(ax, au_map: dict, row: np.ndarray) -> None:
             return
         except Exception as e:
             last_err = e
-    raise RuntimeError(f"feat.plotting.plot_face failed to render a frame: {last_err}")
+    raise RuntimeError(
+        "feat.plotting.plot_face failed to render a frame. Ensure py-feat is installed and compatible.\n"
+        "Try reinstalling: pip install -U py-feat\n"
+    )
 
 
 def main(argv: Optional[Sequence[str]] = None) -> int:
@@ -361,22 +368,11 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     ax.set_axis_off()
     ax.set_title(args.title)
 
-    # Validate that py-feat plot_face is available and works on a test frame
-    try:
-        test_row = values[0]
-        test_map = {name: float(val) for name, val in zip(au_names, test_row.tolist())}
-        _try_plot_face(ax, test_map, test_row)
-    except Exception as e:
-        print(f"[error] feat.plotting.plot_face is unavailable or failed on a test frame: {e}", file=sys.stderr)
+    # Mirror notebook behavior: rely on feat.plotting.plot_face during rendering
+    if not ('plot_face' in globals() and callable(plot_face)):
+        print("[error] Не удалось импортировать feat.plotting.plot_face (пакет py-feat). Запустите в той же среде, что и блокнот, или установите зависимости.", file=sys.stderr)
         return 2
-    # Clear and restore layout after test draw
-    ax.cla()
-    try:
-        ax.set_facecolor(args.bgcolor)
-    except Exception:
-        pass
-    ax.set_axis_off()
-    ax.set_title(args.title)
+    # Keep layout set upfront (axis off, title, bgcolor) and do not clear between frames
 
     # Pre-render all frames with Celluloid.Camera (notebook parity)
     camera = Camera(fig)
@@ -385,21 +381,12 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         iterator = tqdm(values, desc="Rendering frames", unit="f")
 
     for row in iterator:
-        au_map = {name: float(val) for name, val in zip(au_names, row.tolist())}
         try:
-            _try_plot_face(ax, au_map, row)
+            ax = plot_face(model=None, ax=ax, au=row)  # match notebook signature
         except Exception as e:
             print(f"[error] plot_face failed while rendering a frame: {e}", file=sys.stderr)
             return 2
         camera.snap()
-        # Prepare for next frame: keep consistent layout
-        ax.cla()
-        try:
-            ax.set_facecolor(args.bgcolor)
-        except Exception:
-            pass
-        ax.set_axis_off()
-        ax.set_title(args.title)
 
     interval_ms = int(round(1000.0 / max(1, int(args.fps))))
     anim = camera.animate(interval=interval_ms, blit=False)
