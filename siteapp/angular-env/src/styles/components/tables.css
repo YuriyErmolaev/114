@@ -1,0 +1,259 @@
+/* OUTER WRAPPER (external frame) */
+.mdc-data-table,              /* MDC container */
+.mdc-data-table__table,       /* MDC inner table */
+.mat-mdc-table {              /* Angular Material table */
+  width: 100%;
+  background: var(--app-surface-color);
+  color: var(--app-text-muted);
+  border-radius: 8px;
+  overflow: hidden;
+  border-collapse: separate;
+  border-spacing: 0;
+  outline: 1px solid var(--app-border-color);
+  outline-offset: -1px;
+}
+
+/* HEADER */
+.mat-mdc-header-row { background: var(--app-surface-muted); }
+.mat-mdc-header-cell {
+  color: var(--app-text-color);
+  font-weight: 600;
+}
+
+/* BASE RESET */
+.mat-mdc-table .mat-mdc-cell,
+.mat-mdc-table .mat-mdc-header-cell,
+.mat-mdc-table .mat-mdc-footer-cell {
+  border: 0;
+  vertical-align: middle;
+  background-clip: padding-box;
+}
+
+/* GRID (BORDERS) */
+.mat-mdc-table th[mat-header-cell],
+.mat-mdc-table td[mat-cell],
+.mat-mdc-table td[mat-footer-cell] {
+  border-right: 1px solid var(--app-border-color);
+  border-bottom: 1px solid var(--app-border-color);
+}
+
+/* no right border on last cell in row */
+.mat-mdc-table tr > *:last-child { border-right: 0; }
+
+/* keep bottom border on last row */
+.mat-mdc-table tr:last-child > * { border-bottom: 0; }
+
+/* HOVER */
+.mat-mdc-row:hover { background: var(--tbl-row-hover, var(--app-surface-muted)); }
+
+/* NUMERIC ALIGNMENT */
+.table-number { text-align: right; white-space: nowrap; }
+.mat-mdc-header-cell.cdk-column-duration .mat-sort-header-container,
+.mat-mdc-header-cell.cdk-column-fps .mat-sort-header-container,
+.mat-mdc-header-cell.cdk-column-resolution .mat-sort-header-container,
+.mat-mdc-header-cell.cdk-column-size .mat-sort-header-container,
+.mat-mdc-header-cell.cdk-column-faces .mat-sort-header-container,
+.mat-mdc-header-cell.cdk-column-confidence .mat-sort-header-container,
+.mat-mdc-header-cell.cdk-column-createdAt .mat-sort-header-container { justify-content: flex-end; }
+
+/* ACTIONS COLUMN WIDTH */
+th.actions,
+td.actions,
+th.col-actions,
+td.col-actions,
+.mat-mdc-table .mat-column-actions {
+  width: 1%;
+  white-space: nowrap;
+  text-align: right;
+  min-width: 112px;
+  padding-right: 8px;
+}
+
+/* truncation (not for actions) */
+td:not(.actions):not(.col-actions) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* PLAIN TABLES (non-Material) */
+table,
+.table,
+.data-table,
+.list-table,
+.mst-table {
+  width: 100%;
+  background: var(--app-surface-color);
+  color: var(--app-text-muted);
+  border-radius: 8px;
+  overflow: hidden;
+  border-collapse: separate;
+  border-spacing: 0;
+  outline: 1px solid var(--app-border-color);
+  outline-offset: -1px;
+}
+.table thead th,
+.data-table thead th,
+.list-table thead th,
+.mst-table thead th {
+  background: var(--app-surface-muted);
+  color: var(--app-text-color);
+  font-weight: 600;
+}
+.table td,
+.table th,
+.data-table td,
+.data-table th,
+.list-table td,
+.list-table th,
+.mst-table td,
+.mst-table th {
+  border-right: 1px solid var(--app-border-color);
+  border-bottom: 1px solid var(--app-border-color);
+}
+.table tr > *:last-child,
+.data-table tr > *:last-child,
+.list-table tr > *:last-child,
+.mst-table tr > *:last-child { border-right: 0; }
+.table tr:last-child > *,
+.data-table tr:last-child > *,
+.list-table tr:last-child > *,
+.mst-table tr:last-child > * { border-bottom: 1px solid var(--app-border-color); }
+.table tbody tr:hover,
+.data-table tbody tr:hover,
+.list-table tbody tr:hover,
+.mst-table tbody tr:hover { background: var(--tbl-row-hover, var(--app-surface-muted)); }
+
+/* VARS */
+:root {
+  --tbl-border: var(--app-border-color);
+  --tbl-header-bg: var(--app-surface-muted);
+  --tbl-row-hover: var(--app-surface-muted);
+}
+
+/* bottom border in last (actions) column */
+.mat-mdc-table th.cdk-column-actions,
+.mat-mdc-table td.cdk-column-actions {
+  border-bottom: 1px solid var(--app-border-color) !important;
+  box-shadow: none !important;
+}
+
+/* unify row height/paddings */
+.mat-mdc-table .mat-mdc-cell,
+.mat-mdc-table .mat-mdc-header-cell {
+  padding-top: 12px;
+  padding-bottom: 12px;
+  vertical-align: middle;
+}
+.mat-mdc-row,
+.mat-mdc-header-row { min-height: 48px; }
+
+/* left divider before actions (if there is createdAt column) */
+.mat-mdc-table th.cdk-column-createdAt,
+.mat-mdc-table td.cdk-column-createdAt { border-right: 1px solid var(--app-border-color) !important; }
+
+/* === Status colored dots === */
+:root {
+  --st-queued: #9aa0a6;
+  --st-processing: #f59e0b;
+  --st-completed: #16a34a;
+  --st-failed: #dc2626;
+}
+.mat-mdc-table td .dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  margin-right: 8px;
+  vertical-align: middle;
+  transform: translateY(-1px);
+}
+.mat-mdc-table td.st-queued .dot      { background: var(--st-queued); }
+.mat-mdc-table td.st-processing .dot  { background: var(--st-processing); animation: st-blink 1.2s ease-in-out infinite; }
+.mat-mdc-table td.st-completed .dot   { background: var(--st-completed); }
+.mat-mdc-table td.st-failed .dot      { background: var(--st-failed); }
+@keyframes st-blink { 0%,100%{opacity:.55;} 50%{opacity:1;} }
+
+/* === First column (title) layout & truncation === */
+.mat-mdc-table td.cdk-column-title {
+  white-space: normal !important;
+  overflow: visible !important;
+}
+.name-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.name-wrapper a {
+  color: var(--app-text-color);
+  text-decoration: none;
+  font-weight: 600;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.name-wrapper a:hover { text-decoration: underline; }
+.name-detail {
+  color: var(--app-text-muted);
+  font-size: 12px;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  opacity: .9;
+}
+.mat-mdc-header-cell.cdk-column-actions { width: 1%; padding-right: 8px; }
+
+/* === Actions icons (scoped to cells with icon buttons) === */
+td.table-actions { padding-right: 8px; text-align: right; vertical-align: middle; }
+
+td.table-actions .mat-mdc-icon-button {
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  padding: 0;
+  background: transparent !important;
+  border: none !important;
+  color: var(--app-text-color) !important;
+  --mdc-icon-button-state-layer-size: 32px;
+}
+td.table-actions .mat-mdc-icon-button + .mat-mdc-icon-button { margin-left: 8px; }
+
+td.table-actions .mat-mdc-icon-button .mdc-button__label {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+}
+td.table-actions .mat-mdc-icon-button .mat-icon {
+  width: 20px !important;
+  height: 20px !important;
+  font-size: 20px !important;
+  line-height: 1 !important;
+  margin: 0 !important;
+  color: currentColor !important;
+}
+td.table-actions .mat-mdc-icon-button .mat-mdc-button-touch-target { width: 32px; height: 32px; }
+
+
+/* Force bottom border for Material header row */
+.mat-mdc-table .mat-mdc-header-row .mat-mdc-header-cell {
+  border-bottom: 1px solid var(--app-border-color) !important;
+  box-shadow: none !important; /* kill MDC separator if any */
+}
+
+/* Force bottom border for plain tables' header cells */
+.table thead th,
+.data-table thead th,
+.list-table thead th,
+.mst-table thead th {
+  border-bottom: 1px solid var(--app-border-color) !important;
+}
+
+th {
+  background: var(--app-surface-muted) !important;
+}

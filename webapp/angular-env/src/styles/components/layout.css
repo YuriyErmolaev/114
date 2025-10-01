@@ -1,0 +1,130 @@
+:is(app-menu, app-sidebar, aside.sidebar, .sidebar, .sidenav, nav, aside) {
+  background: var(--app-background-color);
+  color: var(--app-text-subtle);
+  border-right: 1px solid var(--app-border-color);
+}
+
+:is(app-menu, app-sidebar, aside.sidebar, .sidebar, .sidenav, nav, aside) ul {
+  list-style: none;
+  margin: 0;
+  padding: 8px;
+}
+
+:is(app-menu, app-sidebar, aside.sidebar, .sidebar, .sidenav, nav, aside) li { margin: 2px 0; }
+
+:is(app-menu, app-sidebar, aside.sidebar, .sidebar, .sidenav, nav, aside) a {
+  display: block;
+  padding: 6px 10px;
+  border-radius: 6px;
+  text-decoration: none;
+  color: var(--app-text-muted);
+}
+
+:is(app-menu, app-sidebar, aside.sidebar, .sidebar, .sidenav, nav, aside) a:hover,
+:is(app-menu, app-sidebar, aside.sidebar, .sidebar, .sidenav, nav, aside) a:focus,
+:is(app-menu, app-sidebar, aside.sidebar, .sidebar, .sidenav, nav, aside) li.active > a,
+:is(app-menu, app-sidebar, aside.sidebar, .sidebar, .sidenav, nav, aside) a.router-link-active,
+:is(app-menu, app-sidebar, aside.sidebar, .sidebar, .sidenav, nav, aside) a[aria-current="page"] {
+  background: var(--app-surface-muted);
+  color: var(--app-text-color);
+}
+
+:is(app-menu, app-sidebar, aside.sidebar, .sidebar, .sidenav, nav, aside) hr,
+:is(app-menu, app-sidebar, aside.sidebar, .sidebar, .sidenav, nav, aside) .divider {
+  border: 0;
+  border-top: 1px solid var(--app-border-color);
+  margin: 8px 0;
+}
+
+.segmented {
+  display: inline-flex;
+  gap: 4px;
+  padding: 2px;
+  background: var(--app-surface-muted);
+  border: 1px solid var(--app-border-color);
+  border-radius: 8px;
+}
+
+.seg-btn {
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--app-text-muted);
+  cursor: pointer;
+}
+
+.seg-btn.active {
+  background: var(--app-surface-color);
+  border-color: var(--app-border-color);
+  color: var(--app-text-color);
+}
+
+.list-header .tab {
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--app-border-color);
+  background: var(--app-surface-muted);
+  color: var(--app-text-muted);
+  cursor: pointer;
+}
+
+.list-header .tab.active {
+  background: var(--app-surface-color);
+  color: var(--app-text-color);
+}
+
+.toolbar .toolbar-field select {
+  min-width: 180px;
+  padding: 6px 10px;
+  border: 1px solid var(--app-border-color);
+  border-radius: 8px;
+  background: var(--app-surface-muted);
+  color: var(--app-text-color);
+}
+
+
+.full-width { width: 100%; }
+.table-wrap { padding: 12px; }
+.clickable { cursor: pointer; }
+
+/* Stepper: rely on theme tokens; keep only minimal tweaks */
+
+/* Labels (base). Material will use tokens for selected state text color. */
+.mat-step-header { color: var(--app-text-color); }
+.mat-step-header .mat-step-label,
+.mat-step-header .mat-step-text-label { color: var(--app-text-muted); }
+
+/* Optional label hint */
+.mat-step-header .mat-step-optional { color: var(--app-text-subtle); }
+
+/* Connectors (if you still want custom separators) */
+.mat-stepper-horizontal-line { background: var(--app-border-color); }
+.mat-vertical-stepper .mat-stepper-vertical-line::before,
+.mat-vertical-stepper .mat-stepper-vertical-line::after {
+  background: var(--app-border-color);
+}
+
+/* Remove previous icon color overrides and !important rules.
+   Icon/label colors and hover layer are now controlled by:
+   --mat-stepper-header-*-color tokens in the theme. */
+
+
+/* Autofill styling: neutralize WebKit yellow and keep labels floated */
+.mat-input-element:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0 1000px var(--app-surface-muted) inset !important;
+  -webkit-text-fill-color: var(--app-text-color) !important;
+  caret-color: var(--app-text-color);
+}
+
+.mat-form-field .mat-input-element.mat-form-field-autofill-control:-webkit-autofill ~ .mat-form-field-label-wrapper .mat-form-field-label {
+  transform: translateY(-1.6em) scale(0.75);
+  opacity: 1;
+}
+
+/* Keep placeholder readable in both themes */
+.mat-mdc-form-field-input-control::placeholder {
+  color: var(--app-placeholder);
+  opacity: 1; /* ensure visible in Safari/Firefox */
+}
+

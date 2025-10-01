@@ -1,0 +1,34 @@
+:root {
+  /* Default (startup) tokens — match the service default: dark */
+  --color-bg: #0b0b0f;
+  --color-text: #e5e7eb;
+  --color-muted: #a1a1aa;
+  --color-border: #2a2a36;
+  --color-surface: #111318;
+  --color-surface-variant: #1a1d24;
+  --color-primary: #64748b;
+  --color-focus: #94a3b8;
+  --shadow-1: 0 1px 2px rgba(0,0,0,.6);
+  --shadow-2: 0 2px 6px rgba(0,0,0,.6);
+  --overlay-scrim: rgba(0, 0, 0, 0.5);
+  --z-overlay: 900;
+  --z-modal: 1000;
+  /* Back-compat app tokens mapped to new tokens */
+  --app-background-color: var(--color-bg);
+  --app-text-color: var(--color-text);
+  --app-surface-color: var(--color-surface);
+  --app-surface-muted: var(--color-surface-variant);
+  --app-border-color: var(--color-border);
+  --app-placeholder: rgba(255, 255, 255, 0.6);
+  --app-link: var(--color-primary);
+  --app-focus: var(--color-focus);
+  --app-text-muted: var(--color-muted);
+  --app-text-subtle: var(--color-muted);
+
+  --brand-h: 220;
+  --brand-s: 65%;
+  --brand-l: 48%;
+  /* Chart tokens defaults (startup) */
+  --chart-bar-back: var(--app-surface-muted);
+  --chart-bar-fill: var(--color-primary);
+}

@@ -1,0 +1,19 @@
+<div class="va-controls">
+  <label class="check">
+    <input type="checkbox" [checked]="showGrid" (change)="onToggleGrid($event)" />
+    <span>Сетка</span>
+  </label>
+
+  <label class="check">
+    <input type="checkbox" [checked]="landmarksEnabled" (change)="onToggleLandmarks($event)" />
+    <span>Landmarks</span>
+  </label>
+
+  <label class="filter">
+    <input
+      type="text"
+      [ngModel]="filter"
+      (ngModelChange)="onFilterChange($event)"
+      placeholder="Фильтр данных" />
+  </label>
+</div>

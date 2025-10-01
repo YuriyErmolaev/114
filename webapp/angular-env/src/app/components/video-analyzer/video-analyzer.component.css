@@ -1,0 +1,42 @@
+:host { display: block; width: 100%; aspect-ratio: var(--va-ratio, 16 / 9); }
+
+.va-layer {
+  display: grid;
+  grid-template-rows: 1fr auto;
+  row-gap: 8px;
+  width: 100%;
+  height: 100%;
+}
+
+.va-stage {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.va-stage > video,
+.va-stage > .va-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center center;
+  transform: var(--va-transform, none);
+}
+
+.va-stage > video {
+  z-index: 1;
+  display: block;
+  background: #000;
+}
+
+.va-stage > .va-canvas {
+  z-index: 2;
+  pointer-events: none;
+  display: block;
+}
+
+.va-landmarks {
+  justify-self: start;
+}

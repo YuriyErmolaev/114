@@ -1,0 +1,8 @@
+.page { padding: 16px; color: var(--app-text-color); }
+.subtitle { margin: 4px 0 16px; opacity: 0.8; }
+
+.form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+.form-grid .full { grid-column: 1 / -1; }
+mat-form-field { width: 100%; }
+
+.actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }

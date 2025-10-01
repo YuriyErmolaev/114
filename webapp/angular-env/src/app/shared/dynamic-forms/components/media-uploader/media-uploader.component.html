@@ -1,0 +1,14 @@
+<form [formGroup]="form" class="descrForm clearFormCard">
+    <textarea
+      [formControlName]="controlName"
+    ></textarea>
+</form>
+<div class="buttonsBlock">
+  <button (click)="selectImage()">Add Image</button>
+  <button (click)="selectVideo()">Add Video</button>
+  <button (click)="selectMarkdown()">Upload Markdown</button>
+  <input type="file" id="imageInput" (change)="onFileSelected($event, 'image')" accept="image/*" style="display:none">
+  <input type="file" id="videoInput" (change)="onFileSelected($event, 'video')" accept="video/*" style="display:none">
+  <input type="file" id="markdownInput" (change)="onFileSelected($event, 'markdown')" accept=".md" style="display:none">
+</div>
+

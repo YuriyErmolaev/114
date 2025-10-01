@@ -1,0 +1,46 @@
+:root { color-scheme: dark; }
+.theme-dark { color-scheme: dark; }
+.theme-light { color-scheme: light; }
+
+html, body {
+  background: var(--app-background-color);
+  color: var(--app-text-color);
+}
+
+body, p, span, label, h1, h2, h3, h4, h5, h6 {
+  color: var(--app-text-color);
+}
+
+*::-webkit-scrollbar { width: 8px; height: 8px; }
+*::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.25); border-radius: 4px; }
+*::-webkit-scrollbar-track { background: transparent; }
+
+a { color: var(--app-link); }
+
+/* Снятие автозаполнения браузером желтым */
+/* Chrome / Edge / Safari */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill,
+select:-webkit-autofill {
+  -webkit-text-fill-color: inherit;
+  caret-color: inherit;
+  -webkit-box-shadow: 0 0 0 1000px transparent inset !important;
+  transition: background-color 9999s ease-in-out 0s;
+}
+
+/* Firefox */
+input:-moz-autofill,
+textarea:-moz-autofill,
+select:-moz-autofill {
+  box-shadow: 0 0 0 1000px transparent inset !important;
+  -moz-appearance: none;
+  color: inherit !important;
+}
+
+/* Для Angular Material (MDC), TODO: проверить, как ведет себя с mat-form-field, подложка */
+.mdc-text-field .mdc-text-field__input:-webkit-autofill {
+  -webkit-text-fill-color: inherit;
+  -webkit-box-shadow: 0 0 0 1000px transparent inset !important;
+}

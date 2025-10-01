@@ -1,0 +1,24 @@
+<div *ngIf="open">
+  <div class="modal-backdrop"></div>
+  <div class="modal-container backdrop" role="presentation" (click)="onBackdropClick($event)">
+    <div #dialog class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="qsg-title" tabindex="-1">
+      <header class="modal-header">
+        <h2 id="qsg-title">Быстрый старт</h2>
+      </header>
+      <section class="modal-body">
+        <p>Добро пожаловать в систему распознавания мимико-пантомимических и речевых комплексов поведения человека!:</p>
+        <ul>
+          <li>Используйте <a href="/home"> основную страницу </a> для ознакомления с системой.</li>
+          <li>Отслеживайте наполнение системы первичными данными и отчетами об анализе на страницах <a href="/report/list">Отчеты</a> и <a href="/interview/list">Интервью</a>.</li>
+          <li>Проверяйте уведомления, чтобы получать информацию о системых событиях и статусы Ваших задач.</li>
+          <li>Воспользуйтесь настройками, чтобы установить время бездействия до выхода из системы,
+ предпочитаемую тему (светлая/темная) и предопределенную цветовую схему.</li>
+          <li>Подробную информацию о системе и её возможностях Вы можете найти в <a href="/docs" target="_blank">системе документации</a></li>
+        </ul>
+      </section>
+      <footer class="modal-footer">
+        <button type="button" class="btn" (click)="close()">Закрыть</button>
+      </footer>
+    </div>
+  </div>
+</div>

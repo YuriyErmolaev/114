@@ -1,0 +1,89 @@
+:is(app-menu, app-sidebar, aside.sidebar, .sidebar, .sidenav, nav, aside) {
+  background: var(--app-background-color);
+  color: var(--app-text-subtle);
+  border-right: 1px solid var(--app-border-color);
+}
+
+:is(app-menu, app-sidebar, aside.sidebar, .sidebar, .sidenav, nav, aside) ul {
+  list-style: none;
+  margin: 0;
+  padding: 8px;
+}
+
+:is(app-menu, app-sidebar, aside.sidebar, .sidebar, .sidenav, nav, aside) li { margin: 2px 0; }
+
+:is(app-menu, app-sidebar, aside.sidebar, .sidebar, .sidenav, nav, aside) a {
+  display: block;
+  padding: 6px 10px;
+  border-radius: 6px;
+  text-decoration: none;
+  color: var(--app-text-muted);
+}
+
+:is(app-menu, app-sidebar, aside.sidebar, .sidebar, .sidenav, nav, aside) a:hover,
+:is(app-menu, app-sidebar, aside.sidebar, .sidebar, .sidenav, nav, aside) a:focus,
+:is(app-menu, app-sidebar, aside.sidebar, .sidebar, .sidenav, nav, aside) li.active > a,
+:is(app-menu, app-sidebar, aside.sidebar, .sidebar, .sidenav, nav, aside) a.router-link-active,
+:is(app-menu, app-sidebar, aside.sidebar, .sidebar, .sidenav, nav, aside) a[aria-current="page"] {
+  background: var(--app-surface-muted);
+  color: var(--app-text-color);
+}
+
+:is(app-menu, app-sidebar, aside.sidebar, .sidebar, .sidenav, nav, aside) hr,
+:is(app-menu, app-sidebar, aside.sidebar, .sidebar, .sidenav, nav, aside) .divider {
+  border: 0;
+  border-top: 1px solid var(--app-border-color);
+  margin: 8px 0;
+}
+
+.segmented {
+  display: inline-flex;
+  gap: 4px;
+  padding: 2px;
+  background: var(--app-surface-muted);
+  border: 1px solid var(--app-border-color);
+  border-radius: 8px;
+}
+
+.seg-btn {
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--app-text-muted);
+  cursor: pointer;
+}
+
+.seg-btn.active {
+  background: var(--app-surface-color);
+  border-color: var(--app-border-color);
+  color: var(--app-text-color);
+}
+
+.list-header .tab {
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--app-border-color);
+  background: var(--app-surface-muted);
+  color: var(--app-text-muted);
+  cursor: pointer;
+}
+
+.list-header .tab.active {
+  background: var(--app-surface-color);
+  color: var(--app-text-color);
+}
+
+.toolbar .toolbar-field select {
+  min-width: 180px;
+  padding: 6px 10px;
+  border: 1px solid var(--app-border-color);
+  border-radius: 8px;
+  background: var(--app-surface-muted);
+  color: var(--app-text-color);
+}
+
+
+.full-width { width: 100%; }
+.table-wrap { padding: 12px; }
+.clickable { cursor: pointer; }

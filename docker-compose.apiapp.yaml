@@ -1,0 +1,22 @@
+services:
+
+  # Fastapi backend
+  apiapp:
+    image: ${DOCKER_REGISTRY}/${APP_ENV:-app}_apiapp:latest
+    pull_policy: always
+    container_name: ${APP_ENV:-app}_apiapp
+    hostname: ${APP_ENV:-app}_apiapp
+    restart: unless-stopped
+    #TODO: remove, it's not necessary and not good idea for prod
+    #ports:
+    #  - ${APIAPP_HTTP_PORT:-7100}:8000
+    volumes:
+      - ${STORAGE_ROOT:-/mnt/share/ai_data}:${APP_STORAGE_ROOT:-/ai_data}:z,rw
+    environment:
+      DATA_ROOT: ${APP_STORAGE_ROOT:-/ai_data}
+      SRC_ROOT: ${APP_SRC_ROOT:-/server}
+      ENABLED_PATHS_CONF: ${APP_ENABLED_PATHS:-/app/config/paths.json}
+      ENABLED_ROUTES_CONF: ${APP_ENABLED_ROUTES:-/app/config/routes.json}
+    command: [ "/usr/local/bin/server-start.sh" ]
+    networks:
+      - ${APP_ENV:-app}-net

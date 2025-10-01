@@ -1,0 +1,14 @@
+<div class="va-layer">
+  <div class="va-stage">
+    <video #video></video>
+    <canvas #canvas class="va-canvas"></canvas>
+  </div>
+
+  <label class="va-landmarks">
+    <input type="checkbox" [checked]="landmarksEnabled" (change)="toggleLandmarks()"> Показывать сетку
+  </label>
+
+  <!-- <label class="va-grid">
+    <input type="checkbox" [checked]="showGrid" (change)="toggleGrid()"> Grid
+  </label> -->
+</div>

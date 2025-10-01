@@ -1,0 +1,87 @@
+<div class="page">
+  <h2>Report Editor</h2>
+  <p *ngIf="uuid">UUID: {{ uuid }}</p>
+
+  <mat-vertical-stepper [linear]="true">
+    <!-- Step 1: Basic info -->
+    <mat-step [stepControl]="stepOneForm" label="Basic Info">
+      <form [formGroup]="stepOneForm" class="step-form" novalidate>
+        <div class="form-grid">
+          <mat-form-field appearance="fill">
+            <mat-label>Subject</mat-label>
+            <input matInput formControlName="subject" placeholder="Enter subject">
+            <mat-error *ngIf="stepOneForm.get('subject')?.hasError('required') && stepOneForm.get('subject')?.touched">
+              Subject is required
+            </mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="fill">
+            <mat-label>Interviewer</mat-label>
+            <input matInput formControlName="interviewer" placeholder="Enter interviewer">
+            <mat-error *ngIf="stepOneForm.get('interviewer')?.hasError('required') && stepOneForm.get('interviewer')?.touched">
+              Interviewer is required
+            </mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="fill">
+            <mat-label>Date</mat-label>
+            <input matInput [matDatepicker]="picker" formControlName="date" placeholder="Select date">
+            <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+            <mat-datepicker #picker></mat-datepicker>
+            <mat-error *ngIf="stepOneForm.get('date')?.hasError('required') && stepOneForm.get('date')?.touched">
+              Date is required
+            </mat-error>
+          </mat-form-field>
+        </div>
+
+        <div class="actions">
+          <button type="button" class="btn btn-primary" matStepperNext [disabled]="stepOneForm.invalid">Next</button>
+        </div>
+      </form>
+    </mat-step>
+
+    <!-- Step 2: Details -->
+    <mat-step [stepControl]="stepTwoForm" label="Details">
+      <form [formGroup]="stepTwoForm" class="step-form" novalidate>
+        <div class="form-grid">
+          <mat-form-field appearance="fill">
+            <mat-label>Score</mat-label>
+            <input matInput type="number" formControlName="score" placeholder="0..100">
+            <mat-hint>Optional</mat-hint>
+            <mat-error *ngIf="stepTwoForm.get('score')?.hasError('min')">Min 0</mat-error>
+            <mat-error *ngIf="stepTwoForm.get('score')?.hasError('max')">Max 100</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="fill">
+            <mat-label>Status</mat-label>
+            <mat-select formControlName="status" required>
+              <mat-option [value]="'draft'">draft</mat-option>
+              <mat-option [value]="'in_review'">in_review</mat-option>
+              <mat-option [value]="'approved'">approved</mat-option>
+              <mat-option [value]="'rejected'">rejected</mat-option>
+            </mat-select>
+            <mat-error *ngIf="stepTwoForm.get('status')?.hasError('required') && stepTwoForm.get('status')?.touched">
+              Status is required
+            </mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="fill" class="full-width">
+            <mat-label>Summary</mat-label>
+            <textarea matInput rows="4" formControlName="summary" placeholder="Summary (optional)"></textarea>
+          </mat-form-field>
+
+          <mat-form-field appearance="fill" class="full-width">
+            <mat-label>Tags</mat-label>
+            <input matInput formControlName="tags" placeholder="tag1, tag2">
+          </mat-form-field>
+        </div>
+
+        <div class="actions">
+          <button type="button" class="btn" matStepperPrevious>Back</button>
+          <button type="button" class="btn" (click)="resetToLoaded()">Reset</button>
+          <button type="button" class="btn btn-primary" (click)="save()" [disabled]="!canSave">Save</button>
+        </div>
+      </form>
+    </mat-step>
+  </mat-vertical-stepper>
+</div>

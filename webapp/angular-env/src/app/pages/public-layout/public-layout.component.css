@@ -1,0 +1,9 @@
+.layout-body {
+  display: flex;
+  min-height: 80vh;
+}
+
+main {
+  flex: 1;
+  padding: 1rem;
+}

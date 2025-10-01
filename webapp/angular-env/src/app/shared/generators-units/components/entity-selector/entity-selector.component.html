@@ -1,0 +1,16 @@
+<div class="entity-selector">
+  <label>{{entityName}}</label>
+  <select *ngIf="items && items.length > 0" (change)="onSelectEntityItem($event)" [(ngModel)]="selectedUUID">
+<!--    <option *ngFor="let item of items" [value]="item.uuid">{{ item.name }}</option>-->
+    <option *ngFor="let item of items" [value]="item.uuid" [disabled]="item.disabled">{{ item.name }}</option>
+  </select>
+  <select *ngIf="!items || items.length === 0" disabled>
+    <option>No items available</option>
+  </select>
+<!--  <div *ngIf="isAdmin" class="buttons">-->
+  <div class="buttons">
+    <button (click)="openAddForm()">A</button>
+    <button (click)="openUpdateForm()">U</button>
+    <button (click)="openDeleteForm()">D</button>
+  </div>
+</div>

@@ -1,0 +1,59 @@
+<div class="uploader2">
+  <div class="u2-header">
+    <h2>Core uploader</h2>
+    <div class="u2-user">
+      <div><strong>User UUID:</strong> <code>{{ userUid }}</code></div>
+      <div class="muted">Session: <code>{{ sessionId }}</code></div>
+    </div>
+  </div>
+
+  <div class="u2-row">
+    <label class="u2-label">Directory</label>
+    <select [(ngModel)]="directory" (change)="onDirectoryChange()" class="u2-select">
+      <option *ngFor="let d of directories" [ngValue]="d">{{ d }}</option>
+    </select>
+  </div>
+
+  <div class="u2-controls">
+    <input #fileInput type="file" multiple (change)="onFilesPicked($event)" class="u2-input-hidden" />
+    <button class="btn" type="button" (click)="onOpenPicker()">Select files</button>
+    <button class="btn" type="button" (click)="clearAll()" [disabled]="!selected.length">Clear</button>
+
+    <div class="u2-spacer"></div>
+
+    <button class="btn primary" type="button" (click)="uploadSelected()" [disabled]="!selected.length || uploading">
+      Upload
+    </button>
+  </div>
+
+  <div class="card">
+    <h3 class="section-title">Selected files</h3>
+    <div class="u2-list" *ngIf="selected.length; else emptySelected">
+      <div class="u2-item" *ngFor="let s of selected; let i = index">
+        <div class="u2-meta">
+          <div class="u2-name" title="{{ s.name }}">{{ s.name }}</div>
+          <div class="u2-sub">{{ s.type || 'unknown' }} • {{ formatSize(s.size) }}</div>
+        </div>
+        <button class="btn" type="button" (click)="removeAt(i)">Remove</button>
+      </div>
+    </div>
+    <ng-template #emptySelected>
+      <div class="u2-empty">No files selected.</div>
+    </ng-template>
+  </div>
+
+  <div class="card">
+    <h3 class="section-title">Files in {{ directory }}/{{ sessionId }}</h3>
+    <div class="u2-list" *ngIf="uploaded.length; else emptyUploaded">
+      <div class="u2-item" *ngFor="let f of uploaded">
+        <div class="u2-meta">
+          <div class="u2-name" title="{{ f.name }}">{{ f.name }}</div>
+          <div class="u2-sub">{{ f.size }} • {{ f.modified }}</div>
+        </div>
+      </div>
+    </div>
+    <ng-template #emptyUploaded>
+      <div class="u2-empty">No files on server.</div>
+    </ng-template>
+  </div>
+</div>

@@ -1,0 +1,8 @@
+.secure-response {
+  margin-top: 1rem;
+  padding: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: #f9f9f9;
+  font-weight: 500;
+}

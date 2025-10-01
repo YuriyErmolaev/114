@@ -1,0 +1,16 @@
+<div class="component_dialog_container">
+  <h2 mat-dialog-title>{{ data.title }}</h2>
+  <div mat-dialog-content>
+    <app-dynamic-form
+      [schema]="data.schema"
+      [endpoint]="data.endpoint"
+      [requestType]="data.requestType"
+      [item]="data.item"
+      [selects]="data.selects"
+      [dialogRef]="dialogRef"
+    ></app-dynamic-form>
+  </div>
+  <div mat-dialog-actions>
+    <button (click)="onNoClick()">Close</button>
+  </div>
+</div>

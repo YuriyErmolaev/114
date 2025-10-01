@@ -1,0 +1,10 @@
+<h2 mat-dialog-title>Новое интервью</h2>
+<div mat-dialog-content>
+  <p>Выберите, что вы хотите сделать:</p>
+</div>
+<div mat-dialog-actions>
+  <button mat-button (click)="chooseOnline()" color="primary">Провести интервью</button>
+  <button mat-button (click)="chooseOffline()">Загрузить запись</button>
+  <span style="flex: 1 1 auto"></span>
+  <button mat-button mat-dialog-close (click)="cancel()">Отмена</button>
+</div>

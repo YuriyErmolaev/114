@@ -1,0 +1,53 @@
+:root { color-scheme: dark; }
+.theme-dark { color-scheme: dark; }
+.theme-light { color-scheme: light; }
+
+html, body {
+  box-sizing: border-box;
+  background: var(--color-bg);
+  color: var(--color-text);
+  min-height: 100%;
+  font-family: "Roboto", sans-serif;
+}
+
+*, *::before, *::after { box-sizing: inherit; }
+
+body, p, span, label, h1, h2, h3, h4, h5, h6 {
+  color: var(--color-text);
+}
+
+*::-webkit-scrollbar { width: 8px; height: 8px; }
+*::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.25); border-radius: 4px; }
+*::-webkit-scrollbar-track { background: transparent; }
+
+a { color: inherit; text-decoration: none; }
+
+/* Снятие автозаполнения браузером желтым */
+/* Chrome / Edge / Safari */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill,
+select:-webkit-autofill {
+  -webkit-text-fill-color: inherit;
+  caret-color: inherit;
+  -webkit-box-shadow: 0 0 0 1000px transparent inset !important;
+  transition: background-color 9999s ease-in-out 0s;
+}
+
+
+input:-moz-autofill,
+textarea:-moz-autofill,
+select:-moz-autofill {
+  box-shadow: 0 0 0 1000px transparent inset !important;
+  -moz-appearance: none;
+  color: inherit !important;
+}
+
+
+:where(.btn, .btn-back, .seg-btn, .chip, .mask-chips .chip, .cat-item, [role="button"]) {
+  caret-color: transparent;
+  -webkit-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}

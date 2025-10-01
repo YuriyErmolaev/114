@@ -1,0 +1,13 @@
+.page { padding: 16px; color: var(--app-text-color); }
+
+.wizard-stub {
+  background: var(--app-surface-color);
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: inset 0 0 0 1px var(--app-border-color);
+}
+
+.field { display: block; width: 100%; margin-bottom: 12px; }
+
+.actions { display: flex; gap: 8px; margin-top: 8px; }
+.upload-label { display: block; margin-bottom: 6px; }

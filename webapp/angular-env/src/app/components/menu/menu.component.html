@@ -1,0 +1,27 @@
+<aside class="sidenav" [class.collapsed]="collapsed" role="navigation" aria-label="Основное меню">
+  <button class="sidenav__toggle" type="button"
+          (click)="toggle()"
+          [attr.aria-label]="collapsed ? 'Развернуть меню' : 'Свернуть меню'"
+          [attr.title]="collapsed ? 'Развернуть меню' : 'Свернуть меню'">
+    <mat-icon>{{ collapsed ? 'chevron_right' : 'chevron_left' }}</mat-icon>
+  </button>
+
+  <ul class="sidenav__list">
+    <li>
+      <a routerLink="/interview/list"
+         [attr.title]="'Интервью'"
+         [attr.aria-label]="collapsed ? 'Интервью' : null">
+        <mat-icon class="sidenav__icon">forum</mat-icon>
+        <span class="sidenav__label">Интервью</span>
+      </a>
+    </li>
+    <li>
+      <a routerLink="/report/list"
+         [attr.title]="'Отчеты'"
+         [attr.aria-label]="collapsed ? 'Отчеты' : null">
+        <mat-icon class="sidenav__icon">bar_chart</mat-icon>
+        <span class="sidenav__label">Отчеты</span>
+      </a>
+    </li>
+  </ul>
+</aside>

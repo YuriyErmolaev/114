@@ -1,0 +1,7 @@
+.summary-panel { background: var(--app-surface-color); border-radius: 8px; box-shadow: inset 0 0 0 1px var(--app-border-color); padding: 12px; color: var(--app-text-color); }
+.summary-title { margin: 0 0 8px; font-size: 16px; font-weight: 600; }
+.summary-list .row { display: grid; grid-template-columns: 120px 1fr; gap: 8px; padding: 6px 0; align-items: baseline; }
+.summary-list .row.sep { height: 1px; background: var(--app-border-color); padding: 0; margin: 6px 0; }
+.summary-list .label { color: var(--app-text-subtle); font-size: 12px; }
+.summary-list .value { color: var(--app-text-color); }
+.summary-list .value-multiline { white-space: pre-wrap; }

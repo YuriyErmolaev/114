@@ -1,0 +1,88 @@
+  {
+    "realm": "demo",
+    "enabled": true,
+    "users": [
+      {
+        "username": "demo",
+        "enabled": true,
+        "email": "demo@example.com",
+        "credentials": [
+          {
+            "type": "password",
+            "value": "demo123",
+            "temporary": false
+          }
+        ],
+        "requiredActions": [],
+        "realmRoles": []
+      }
+    ],
+    "clients": [
+      {
+        "clientId": "fastapi-client",
+        "publicClient": true,
+        "redirectUris": [
+          "*"
+        ],
+        "webOrigins": [
+          "*"
+        ],
+        "standardFlowEnabled": false,
+        "directAccessGrantsEnabled": true,
+        "protocolMappers": [
+          {
+            "name": "audience-fastapi-client",
+            "protocol": "openid-connect",
+            "protocolMapper": "oidc-audience-mapper",
+            "consentRequired": false,
+            "config": {
+              "included.client.audience": "fastapi-client",
+              "access.token.claim": "true",
+              "id.token.claim": "false"
+            }
+          }
+        ]
+      }
+    ],
+    "roles": {
+      "realm": []
+    },
+    "requiredActions": [
+      {
+        "alias": "CONFIGURE_TOTP",
+        "name": "Configure OTP",
+        "providerId": "CONFIGURE_TOTP",
+        "enabled": false,
+        "defaultAction": false,
+        "priority": 10,
+        "config": {}
+      },
+      {
+        "alias": "UPDATE_PASSWORD",
+        "name": "Update Password",
+        "providerId": "UPDATE_PASSWORD",
+        "enabled": false,
+        "defaultAction": false,
+        "priority": 30,
+        "config": {}
+      },
+      {
+        "alias": "UPDATE_PROFILE",
+        "name": "Update Profile",
+        "providerId": "UPDATE_PROFILE",
+        "enabled": false,
+        "defaultAction": false,
+        "priority": 40,
+        "config": {}
+      },
+      {
+        "alias": "VERIFY_EMAIL",
+        "name": "Verify Email",
+        "providerId": "VERIFY_EMAIL",
+        "enabled": false,
+        "defaultAction": false,
+        "priority": 50,
+        "config": {}
+      }
+    ]
+  }

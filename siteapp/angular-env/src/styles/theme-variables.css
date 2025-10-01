@@ -1,0 +1,17 @@
+:root {
+  --app-background-color: #000000;
+  --app-text-color: #ffffff;
+  --app-surface-color: #111216;
+  --app-surface-muted: #181a20;
+  --app-border-color: rgba(255, 255, 255, 0.2);
+  --app-placeholder: rgba(255, 255, 255, 0.6);
+  --app-link: #7abaff;
+  --app-focus: #5aa9ff;
+  --app-text-muted: rgba(255, 255, 255, 0.75);
+  --app-text-subtle: rgba(255, 255, 255, 0.6);
+
+  --brand-h: 220;
+  --brand-s: 65%;
+  --brand-l: 48%;
+}
+

@@ -1,0 +1,16 @@
+FROM python:3.11-slim
+
+WORKDIR /server
+
+COPY ./server .
+COPY ./init-app/server-start.sh /usr/local/bin/server-start.sh
+
+RUN set -x \
+  && pwd && ls -la . \
+  && apt update && apt install --no-install-recommends --yes python3-opencv procps mc curl \
+  && python3 -m venv venv  \
+  && . venv/bin/activate \
+  && if [ -e "requirements.txt" ]; then pip install -r requirements.txt; fi \
+  && deactivate
+
+CMD ["bash", "-c", "service ssh start && /usr/local/bin/server-start.sh"]

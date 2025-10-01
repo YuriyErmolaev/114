@@ -1,0 +1,14 @@
+:host {
+  display: block;
+  width: 100%;
+}
+
+/* page grid */
+.page {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 16px;
+  padding: 12px 16px 16px;
+  box-sizing: border-box;
+  align-items: start;
+}

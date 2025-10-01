@@ -1,0 +1,12 @@
+<div class="summary-panel">
+  <h3 class="summary-title">Summary</h3>
+  <div class="summary-list">
+    <ng-container *ngFor="let it of items">
+      <div *ngIf="it.separator" class="row sep"></div>
+      <div *ngIf="!it.separator" class="row">
+        <div class="label">{{ it.label }}</div>
+        <div class="value" [class.value-multiline]="it.multiline">{{ displayValue(it.value) }}</div>
+      </div>
+    </ng-container>
+  </div>
+</div>

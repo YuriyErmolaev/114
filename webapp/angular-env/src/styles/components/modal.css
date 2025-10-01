@@ -1,0 +1,72 @@
+/* Global modal styles: backdrop + container + dialog; theme-aware via CSS variables */
+.modal-backdrop {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.48);
+  z-index: 1000;
+}
+
+.modal-container {
+  position: fixed; inset: 0;
+  display: grid; place-items: center;
+  z-index: 1001;
+  padding: 24px;
+}
+
+.modal-dialog {
+  background: var(--color-surface);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-2);
+  border-radius: 10px;
+  width: min(640px, 92vw);
+  max-height: 84vh;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  overflow: hidden;
+}
+
+.modal-header {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--color-border);
+  font-weight: 600;
+}
+
+.modal-body {
+  padding: 16px;
+  overflow: auto;
+}
+
+.modal-footer {
+  padding: 10px 16px;
+  border-top: 1px solid var(--color-border);
+  display: flex; gap: 8px; justify-content: flex-end;
+}
+
+/* Buttons inside footers (generic look bound to tokens) */
+.modal-footer .btn {
+  background: var(--color-surface-variant);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+
+.modal-footer .btn.primary {
+  background: var(--color-primary);
+  color: #fff;
+  border-color: transparent;
+}
+
+/* Focus visibility */
+.modal-dialog :focus-visible,
+.modal-footer .btn:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+/* Simple fade/scale (optional) */
+.modal-enter { opacity: 0; transform: scale(.98); }
+.modal-enter-active { transition: opacity .15s ease, transform .15s ease; opacity: 1; transform: scale(1); }
+.modal-exit { opacity: 1; transform: scale(1); }
+.modal-exit-active { transition: opacity .12s ease, transform .12s ease; opacity: 0; transform: scale(.98); }

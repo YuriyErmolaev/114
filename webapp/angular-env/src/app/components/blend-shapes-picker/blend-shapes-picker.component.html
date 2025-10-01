@@ -1,0 +1,18 @@
+<input
+  type="text"
+  [ngModel]="filter"
+  (ngModelChange)="onFilterChange($event)"
+  placeholder="Find blend shape..."
+  class="picker-filter"
+/>
+
+<div class="picker-list">
+  <label class="item" *ngFor="let it of list; trackBy: trackByName">
+    <input
+      type="checkbox"
+      [checked]="isChecked(it.categoryName)"
+      (change)="toggle(it, $any($event.target).checked)"
+    />
+    <span>{{ it.displayName || it.categoryName }}</span>
+  </label>
+</div>

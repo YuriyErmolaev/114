@@ -1,0 +1,96 @@
+<div class="page">
+  <h2>Online interview</h2>
+
+  <app-wizard-layout [mainCol]="2" [sideCol]="1" [sideMin]="360">
+    <div left>
+      <mat-vertical-stepper [linear]="true" class="wizard-stub">
+        <!-- Step 1 -->
+        <mat-step label="Basic info" [stepControl]="stepOneForm" [completed]="stepOneForm.valid">
+          <form [formGroup]="stepOneForm">
+            <mat-form-field appearance="fill" class="field">
+              <mat-label>Title</mat-label>
+              <input matInput formControlName="title" required placeholder="Enter interview title" autocomplete="off" appAutofillSync>
+            </mat-form-field>
+
+            <mat-form-field appearance="fill" class="field">
+              <mat-label>Interviewer</mat-label>
+              <input matInput formControlName="interviewer" required placeholder="Interviewer name" autocomplete="name" appAutofillSync>
+            </mat-form-field>
+
+            <mat-form-field appearance="fill" class="field">
+              <mat-label>Date</mat-label>
+              <input matInput [matDatepicker]="picker" formControlName="date" required placeholder="Select date" autocomplete="off" appAutofillSync>
+              <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+              <mat-datepicker #picker></mat-datepicker>
+            </mat-form-field>
+
+            <div class="actions">
+              <button type="button" class="btn btn-primary" matStepperNext [disabled]="stepOneForm.invalid">Next</button>
+            </div>
+          </form>
+        </mat-step>
+
+        <!-- Step 2 -->
+        <mat-step label="Additional" [stepControl]="stepTwoForm" [completed]="stepTwoForm.valid">
+          <form [formGroup]="stepTwoForm">
+            <mat-form-field appearance="fill" class="field">
+              <mat-label>Notes</mat-label>
+              <textarea matInput formControlName="notes" rows="4" maxlength="250" placeholder="Add context or notes" autocomplete="off" appAutofillSync></textarea>
+              <mat-hint>Max 250 characters</mat-hint>
+            </mat-form-field>
+
+            <mat-form-field appearance="fill" class="field">
+              <mat-label>Tags</mat-label>
+              <input matInput formControlName="tags" placeholder="Comma-separated tags" autocomplete="off" appAutofillSync>
+            </mat-form-field>
+
+            <div class="actions">
+              <button type="button" class="btn" matStepperPrevious>Back</button>
+              <button type="button" class="btn btn-primary" matStepperNext>Next</button>
+            </div>
+          </form>
+        </mat-step>
+
+        <!-- Step 3: Hardware -->
+        <mat-step label="Hardware" [stepControl]="stepThreeForm" [completed]="stepThreeForm.valid">
+          <form [formGroup]="stepThreeForm">
+            <mat-form-field appearance="fill" class="field">
+              <mat-label>Camera model</mat-label>
+              <input matInput formControlName="cameraModel" placeholder="e.g. Logitech C920" autocomplete="off" appAutofillSync>
+            </mat-form-field>
+            <mat-form-field appearance="fill" class="field">
+              <mat-label>Microphone model</mat-label>
+              <input matInput formControlName="microphoneModel" placeholder="e.g. Blue Yeti" autocomplete="off" appAutofillSync>
+            </mat-form-field>
+            <div class="actions">
+              <button type="button" class="btn" matStepperPrevious>Back</button>
+              <button type="button" class="btn btn-primary" matStepperNext>Next</button>
+            </div>
+          </form>
+        </mat-step>
+
+        <!-- Step 4: Meta -->
+        <mat-step label="Meta" [stepControl]="stepFourForm" [completed]="stepFourForm.valid">
+          <form [formGroup]="stepFourForm" (ngSubmit)="onSubmit()">
+            <mat-form-field appearance="fill" class="field">
+              <mat-label>Location</mat-label>
+              <input matInput formControlName="location" placeholder="Office / Remote" autocomplete="off" appAutofillSync>
+            </mat-form-field>
+            <mat-form-field appearance="fill" class="field">
+              <mat-label>Reference ID</mat-label>
+              <input matInput formControlName="referenceId" placeholder="Optional reference" autocomplete="off" appAutofillSync>
+            </mat-form-field>
+            <div class="actions">
+              <button type="button" class="btn" matStepperPrevious>Back</button>
+              <button type="submit" class="btn btn-primary">Submit</button>
+            </div>
+          </form>
+        </mat-step>
+      </mat-vertical-stepper>
+    </div>
+
+    <div right>
+      <app-wizard-summary [items]="summaryItems"></app-wizard-summary>
+    </div>
+  </app-wizard-layout>
+</div>

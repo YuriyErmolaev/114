@@ -1,0 +1,28 @@
+.theme-light {
+  --app-background-color: #ffffff;
+  --app-text-color: #111111;
+  --app-surface-color: #ffffff;
+  --app-surface-muted: #f5f7fa;
+  --app-border-color: rgba(0, 0, 0, 0.12);
+  --app-placeholder: rgba(0, 0, 0, 0.45);
+  --app-link: #1e88e5;
+  --app-focus: #1e88e5;
+  --app-text-muted: rgba(17, 17, 17, 0.85);
+  --app-text-subtle: rgba(17, 17, 17, 0.6);
+
+
+  --mat-table-background-color: var(--app-surface-color);
+  --mat-table-row-item-label-text-color: var(--app-text-color);
+  --mat-table-header-headline-color: var(--app-text-color);
+  --mat-table-row-item-outline-color: var(--app-border-color);
+
+  /* Button tokens (light) */
+  --btn-primary-bg: var(--app-link);
+  --btn-primary-hover-bg: var(--app-focus);
+  --btn-primary-fg: #ffffff;
+
+  --btn-secondary-bg: var(--app-surface-muted);
+  --btn-secondary-hover-bg: var(--app-surface-color);
+  --btn-secondary-fg: var(--app-text-color);
+
+}

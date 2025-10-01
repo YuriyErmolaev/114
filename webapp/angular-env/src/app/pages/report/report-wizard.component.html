@@ -1,0 +1,123 @@
+<div class="page">
+  <h2>Report setup</h2>
+
+  <app-wizard-layout [mainCol]="2" [sideCol]="1" [sideMin]="360">
+    <div left>
+      <mat-vertical-stepper [linear]="true" class="wizard-stub">
+        <!-- Step 1 -->
+        <mat-step label="Basic info" [stepControl]="stepOneForm" [completed]="stepOneForm.valid">
+          <form [formGroup]="stepOneForm">
+            <mat-form-field appearance="fill" class="field">
+              <mat-label>Subject</mat-label>
+              <input matInput formControlName="subject" required placeholder="Subject name" autocomplete="organization" appAutofillSync>
+              <mat-error *ngIf="!!subjectCtrl && subjectCtrl.hasError('required') && (subjectCtrl.touched || subjectCtrl.dirty)">
+                Subject is required
+              </mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="fill" class="field">
+              <mat-label>Interviewer</mat-label>
+              <input matInput formControlName="interviewer" required placeholder="Interviewer name" autocomplete="name" appAutofillSync>
+              <mat-error *ngIf="!!interviewerCtrl && interviewerCtrl.hasError('required') && (interviewerCtrl.touched || interviewerCtrl.dirty)">
+                Interviewer is required
+              </mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="fill" class="field">
+              <mat-label>Date</mat-label>
+              <input matInput [matDatepicker]="picker" formControlName="date" required placeholder="Select date" autocomplete="off" appAutofillSync>
+              <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+              <mat-datepicker #picker></mat-datepicker>
+              <mat-error *ngIf="!!dateCtrl && dateCtrl.hasError('required') && (dateCtrl.touched || dateCtrl.dirty)">
+                Date is required
+              </mat-error>
+            </mat-form-field>
+
+            <div class="actions">
+              <button type="button" class="btn btn-primary" matStepperNext [disabled]="stepOneForm.invalid">Next</button>
+            </div>
+          </form>
+        </mat-step>
+
+        <!-- Step 2 -->
+        <mat-step label="Details" [stepControl]="stepTwoForm" [completed]="stepTwoForm.valid">
+          <form [formGroup]="stepTwoForm">
+            <mat-form-field appearance="fill" class="field">
+              <mat-label>Score</mat-label>
+              <input matInput type="number" formControlName="score" min="0" max="100" step="1" required placeholder="0–100" autocomplete="off" appAutofillSync>
+              <mat-error *ngIf="!!scoreCtrl && scoreCtrl.hasError('required') && (scoreCtrl.touched || scoreCtrl.dirty)">
+                Score is required
+              </mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="fill" class="field">
+              <mat-label>Status</mat-label>
+              <mat-select formControlName="status" required>
+                <mat-option value="" disabled>Select status</mat-option>
+                <mat-option value="draft">draft</mat-option>
+                <mat-option value="in_review">in_review</mat-option>
+                <mat-option value="final">final</mat-option>
+              </mat-select>
+              <mat-error *ngIf="!!statusCtrl && statusCtrl.hasError('required') && (statusCtrl.touched || statusCtrl.dirty)">
+                Status is required
+              </mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="fill" class="field">
+              <mat-label>Comments</mat-label>
+              <textarea matInput formControlName="comments" rows="4" maxlength="250" placeholder="Reviewer comments" autocomplete="off" appAutofillSync></textarea>
+              <mat-hint>Max 250 characters</mat-hint>
+            </mat-form-field>
+
+            <div class="actions">
+              <button type="button" class="btn" matStepperPrevious>Back</button>
+              <button type="button" class="btn btn-primary" matStepperNext>Next</button>
+            </div>
+          </form>
+        </mat-step>
+
+        <!-- Step 3: Metrics (example) -->
+        <mat-step label="Metrics" [stepControl]="metricsForm" [completed]="metricsForm.valid">
+          <form [formGroup]="metricsForm">
+            <mat-form-field appearance="fill" class="field">
+              <mat-label>Summary score</mat-label>
+              <input matInput type="number" formControlName="summaryScore" min="0" max="100" step="1" placeholder="0–100" autocomplete="off" appAutofillSync>
+            </mat-form-field>
+            <mat-form-field appearance="fill" class="field">
+              <mat-label>Status override</mat-label>
+              <input matInput formControlName="status" placeholder="e.g. final" autocomplete="off" appAutofillSync>
+            </mat-form-field>
+            <div class="actions">
+              <button type="button" class="btn" matStepperPrevious>Back</button>
+              <button type="button" class="btn btn-primary" matStepperNext>Next</button>
+            </div>
+          </form>
+        </mat-step>
+
+        <!-- Step 4: Publishing (example) -->
+        <mat-step label="Publishing" [stepControl]="publishingForm" [completed]="publishingForm.valid">
+          <form [formGroup]="publishingForm" (ngSubmit)="onSubmit()">
+            <mat-form-field appearance="fill" class="field">
+              <mat-label>Reviewer</mat-label>
+              <input matInput formControlName="reviewer" placeholder="Reviewer name" autocomplete="name" appAutofillSync>
+            </mat-form-field>
+            <mat-form-field appearance="fill" class="field">
+              <mat-label>Published at</mat-label>
+              <input matInput [matDatepicker]="pubPicker" formControlName="publishedAt" placeholder="Select date" autocomplete="off" appAutofillSync>
+              <mat-datepicker-toggle matSuffix [for]="pubPicker"></mat-datepicker-toggle>
+              <mat-datepicker #pubPicker></mat-datepicker>
+            </mat-form-field>
+            <div class="actions">
+              <button type="button" class="btn" matStepperPrevious>Back</button>
+              <button type="submit" class="btn btn-primary">Submit</button>
+            </div>
+          </form>
+        </mat-step>
+      </mat-vertical-stepper>
+    </div>
+
+    <div right>
+      <app-wizard-summary [items]="summaryItems"></app-wizard-summary>
+    </div>
+  </app-wizard-layout>
+</div>

@@ -1,0 +1,127 @@
+.panel {
+  border: 1px solid var(--app-border-color);
+  border-radius: 10px;
+  background: var(--app-surface-color);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.panel > .panel-header,
+.panel > h3 {
+  margin: 0;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--app-border-color);
+  font-size: 14px;
+  color: var(--app-text-color);
+}
+
+.panel-title {
+  margin: 0 0 8px 0;
+  padding: 8px 10px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--app-text-color);
+}
+
+.panel-body,
+.card-left {
+  padding: 8px 10px 12px;
+}
+
+.list-block {
+  border: 1px solid var(--app-border-color);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--app-surface-color);
+}
+
+.list-header {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--app-border-color);
+}
+
+.list-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--app-text-color);
+}
+
+.list-body {
+  padding: 8px 10px;
+}
+
+.list-body.scroll {
+  max-height: 260px;
+  overflow: auto;
+  padding: 8px 10px;
+}
+
+.main-video {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 16 / 9;
+  min-height: 260px;
+}
+
+.main-video > app-video-viewport {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  border: 1px solid var(--app-border-color);
+  background: var(--app-surface-color);
+  font-size: 12px;
+  line-height: 1;
+  color: var(--app-text-color);
+  z-index: 4;
+}
+
+.badge.small { font-size: 11px; padding: 2px 6px; }
+
+/* utilities */
+.u-surface { background: var(--app-surface-color); color: var(--app-text-color); }
+.u-surface-muted { background: var(--app-surface-muted); }
+.u-border { border: 1px solid var(--app-border-color); }
+.u-border-bottom { border-bottom: 1px solid var(--app-border-color); }
+.u-border-right { border-right: 1px solid var(--app-border-color); }
+.u-radius-8 { border-radius: 8px; }
+.u-radius-10 { border-radius: 10px; }
+.u-text-subtle { color: var(--app-text-subtle); }
+.u-bg-video { background: #000; }
+
+/* card alias */
+.card {
+  border: 1px solid var(--app-border-color);
+  border-radius: 12px;
+  background: var(--app-surface-color);
+  box-shadow: 0 1px 1px rgba(0,0,0,0.02);
+  padding: 14px 16px;
+}
+
+.card > .section-title {
+  margin: 0 0 8px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--app-text-color);
+}
+
+/* report widgets */
+.kv,
+.risk-row {
+  border: 1px solid var(--app-border-color);
+  border-radius: 8px;
+  background: var(--app-surface-muted);
+}
+
+.meta__label { color: var(--app-text-subtle); }
+.meta__value { color: var(--app-text-color); }
+.meta__value.accent { color: var(--app-link); }

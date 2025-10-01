@@ -1,0 +1,59 @@
+.badge {
+  background: var(--app-surface-color);
+  border: 1px solid var(--app-border-color);
+  color: var(--app-text-muted);
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-size: 12px;
+  line-height: 1;
+}
+
+/* positioning utilities */
+.u-badge { position: absolute; z-index: 4; }
+.u-pos-tr { top: 8px; right: 8px; }
+.u-pos-tl { top: 8px; left: 8px; }
+.u-pos-br { bottom: 8px; right: 8px; }
+.u-pos-bl { bottom: 8px; left: 8px; }
+
+.pill {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  font-size: 12px;
+  line-height: 1.2;
+  border: 1px solid var(--app-border-color);
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--app-text-color);
+}
+
+.pill.success,
+.pill--success {
+  background: rgba(46, 160, 67, 0.18);
+  border-color: rgba(46, 160, 67, 0.5);
+  color: #b6f0c3;
+}
+
+.pill.warning,
+.pill--warning {
+  background: rgba(250, 204, 21, 0.2);
+  border-color: rgba(250, 204, 21, 0.55);
+  color: #ffe8a3;
+}
+
+.pill.error,
+.pill--error,
+.pill.danger,
+.pill--danger {
+  background: rgba(239, 68, 68, 0.18);
+  border-color: rgba(239, 68, 68, 0.55);
+  color: #ffc2c2;
+}
+
+.pill.info,
+.pill--info,
+.pill.neutral,
+.pill--neutral {
+  background: rgba(125, 211, 252, 0.18);
+  border-color: rgba(125, 211, 252, 0.5);
+  color: #c9efff;
+}

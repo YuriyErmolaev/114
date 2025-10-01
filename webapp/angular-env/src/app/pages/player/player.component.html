@@ -1,0 +1,60 @@
+<div class="card player-card">
+  <div class="controls top">
+    <mat-form-field appearance="outline" class="source">
+      <mat-select [(ngModel)]="selectedSourceId" (selectionChange)="changeSource()" disableOptionCentering>
+        <mat-option *ngFor="let s of sources" [value]="s.id">{{ s.label }}</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <button mat-raised-button (click)="togglePlay()">
+      <mat-icon>{{ isPlaying ? 'pause' : 'play_arrow' }}</mat-icon>
+      {{ isPlaying ? 'Pause' : 'Play' }}
+    </button>
+
+    <button mat-raised-button (click)="toggleMute()">
+      <mat-icon>{{ isMuted ? 'volume_off' : 'volume_up' }}</mat-icon>
+      {{ isMuted ? 'Unmute' : 'Mute' }}
+    </button>
+
+    <div class="vol">
+      <mat-icon class="vol-icon">volume_down</mat-icon>
+      <mat-slider min="0" max="100" step="1">
+        <input matSliderThumb
+               [(ngModel)]="volume"
+               (ngModelChange)="onVolume($event)">
+      </mat-slider>
+    </div>
+
+    <div class="rate">
+      <span>Rate</span>
+      <mat-select [value]="rate" (valueChange)="onRate($event)">
+        <mat-option [value]="0.5">0.5×</mat-option>
+        <mat-option [value]="1">1×</mat-option>
+        <mat-option [value]="1.5">1.5×</mat-option>
+        <mat-option [value]="2">2×</mat-option>
+      </mat-select>
+    </div>
+
+    <button mat-raised-button (click)="fullscreen()">
+      <mat-icon>fullscreen</mat-icon>
+      Fullscreen
+    </button>
+  </div>
+
+  <div class="video-wrap">
+    <video #videoRef [src]="currentSrc" (loadedmetadata)="onLoadedMetadata()" playsinline></video>
+  </div>
+
+  <div class="controls bottom">
+    <span class="time">{{ toHms(current) }} / {{ toHms(duration) }}</span>
+    <mat-slider class="seek" [min]="0" [max]="duration || 0" [step]="0.1">
+      <input matSliderThumb
+             [(ngModel)]="current"
+             (ngModelChange)="onSeek($event)">
+    </mat-slider>
+  </div>
+
+  <p class="hint">
+    Tip: open <code>/player?src=&lt;url&gt;</code> to play a custom video.
+  </p>
+</div>

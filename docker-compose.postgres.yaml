@@ -1,0 +1,23 @@
+services:
+  postgres:
+    #TODO: move to registry for production
+    image: postgres:latest
+    container_name: ${APP_ENV:-app}_postgres
+    hostname: ${APP_ENV:-app}_postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${APP_ENV:-app}_db
+    # Just for debug, don't 
+    # ports: 
+    #  - ${POSTGRES_PORT:-5432}:5432
+    volumes:
+      #TODO: init scripts, но потом их копировать в образ при билде; после отладки rw->ro
+      - ${POSTGRES_DATA_ROOT:-/mnt/share}/postgresql/data:/var/lib/postgresql/data:z,rw
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U "]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ${APP_ENV:-app}-net

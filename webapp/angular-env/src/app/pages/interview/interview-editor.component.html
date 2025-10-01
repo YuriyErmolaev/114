@@ -1,0 +1,58 @@
+<div class="page">
+  <h2>Interview Editor</h2>
+  <div class="subtitle">UUID: {{ uuid }}</div>
+
+  <mat-vertical-stepper [linear]="true">
+    <mat-step [stepControl]="stepOneForm" label="Basic Info">
+      <form [formGroup]="stepOneForm">
+        <div class="form-grid">
+          <mat-form-field appearance="fill">
+            <mat-label>Title</mat-label>
+            <input matInput placeholder="Title" formControlName="title" required>
+            <mat-error *ngIf="stepOneForm.get('title')?.hasError('required')">Required</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="fill">
+            <mat-label>Interviewer</mat-label>
+            <input matInput placeholder="Interviewer" formControlName="interviewer" required>
+            <mat-error *ngIf="stepOneForm.get('interviewer')?.hasError('required')">Required</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="fill">
+            <mat-label>Date</mat-label>
+            <input matInput [matDatepicker]="picker" placeholder="Choose a date" formControlName="date" required>
+            <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+            <mat-datepicker #picker></mat-datepicker>
+            <mat-error *ngIf="stepOneForm.get('date')?.hasError('required')">Required</mat-error>
+          </mat-form-field>
+        </div>
+
+        <div class="actions">
+          <button type="button" class="btn btn-primary" matStepperNext [disabled]="stepOneForm.invalid">Next</button>
+        </div>
+      </form>
+    </mat-step>
+
+    <mat-step [stepControl]="stepTwoForm" label="Details">
+      <form [formGroup]="stepTwoForm">
+        <div class="form-grid">
+          <mat-form-field appearance="fill" class="full">
+            <mat-label>Notes</mat-label>
+            <textarea matInput rows="5" formControlName="notes"></textarea>
+          </mat-form-field>
+
+          <mat-form-field appearance="fill">
+            <mat-label>Tags</mat-label>
+            <input matInput placeholder="Tags" formControlName="tags">
+          </mat-form-field>
+        </div>
+
+        <div class="actions">
+          <button type="button" class="btn" matStepperPrevious>Back</button>
+          <button type="button" class="btn" (click)="resetToLoaded()">Reset</button>
+          <button type="button" class="btn btn-primary" (click)="save()" [disabled]="!canSave">Save</button>
+        </div>
+      </form>
+    </mat-step>
+  </mat-vertical-stepper>
+</div>

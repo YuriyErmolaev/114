@@ -1,0 +1,20 @@
+.va-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.check {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  user-select: none;
+}
+
+.filter input {
+  padding: 6px 10px;
+  border: 1px solid #cfd6de;
+  border-radius: 8px;
+  min-width: 200px;
+}

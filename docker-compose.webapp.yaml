@@ -1,0 +1,15 @@
+services:
+
+  # Angular-based webapp over angie (multistage pipeline)
+  webapp:
+    image: ${DOCKER_REGISTRY}/${APP_ENV:-app}_webapp:latest
+    pull_policy: always
+    container_name: ${APP_ENV:-app}_webapp
+    hostname: ${APP_ENV:-app}_webapp
+    restart: unless-stopped
+    ports:
+      - ${WEBAPP_HTTP_PORT:-8000}:80
+    environment:
+      TZ: "Europe/Moscow"
+    networks:
+      - ${APP_ENV:-app}-net

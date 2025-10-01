@@ -1,0 +1,68 @@
+<div class="page">
+  <h2>Offline interview (upload)</h2>
+
+  <app-wizard-layout [mainCol]="2" [sideCol]="1" [sideMin]="360">
+    <div left>
+      <mat-vertical-stepper [linear]="true" class="wizard-stub">
+        <!-- Step 1: Upload -->
+        <mat-step label="Upload recording" [stepControl]="uploadForm" [completed]="uploadForm.valid">
+          <form [formGroup]="uploadForm">
+            <div class="field">
+              <input id="uploadFileInput" type="file" (change)="onFileSelected($event)" style="display: none;">
+              <label for="uploadFileInput" class="btn">Выберите файл</label>
+            </div>
+            <mat-form-field appearance="fill" class="field">
+              <mat-label>File name</mat-label>
+              <input matInput formControlName="fileName" readonly>
+            </mat-form-field>
+            <div class="actions">
+              <button type="button" class="btn btn-primary" matStepperNext [disabled]="uploadForm.invalid">Next</button>
+            </div>
+          </form>
+        </mat-step>
+
+        <!-- Step 2: Info -->
+        <mat-step label="Basic info" [stepControl]="infoForm" [completed]="infoForm.valid">
+          <form [formGroup]="infoForm">
+            <mat-form-field appearance="fill" class="field">
+              <mat-label>Title</mat-label>
+              <input matInput formControlName="title" required placeholder="Enter interview title">
+            </mat-form-field>
+
+            <mat-form-field appearance="fill" class="field">
+              <mat-label>Interviewer</mat-label>
+              <input matInput formControlName="interviewer" placeholder="Interviewer name">
+            </mat-form-field>
+
+            <div class="actions">
+              <button type="button" class="btn" matStepperPrevious>Back</button>
+              <button type="button" class="btn btn-primary" matStepperNext [disabled]="infoForm.invalid">Next</button>
+            </div>
+          </form>
+        </mat-step>
+
+        <!-- Step 3: Meta -->
+        <mat-step label="Meta" [stepControl]="metaForm" [completed]="metaForm.valid">
+          <form [formGroup]="metaForm" (ngSubmit)="onSubmit()">
+            <mat-form-field appearance="fill" class="field">
+              <mat-label>Location</mat-label>
+              <input matInput formControlName="location" placeholder="Office / Remote">
+            </mat-form-field>
+            <mat-form-field appearance="fill" class="field">
+              <mat-label>Reference ID</mat-label>
+              <input matInput formControlName="referenceId" placeholder="Optional reference">
+            </mat-form-field>
+            <div class="actions">
+              <button type="button" class="btn" matStepperPrevious>Back</button>
+              <button type="submit" class="btn btn-primary">Submit</button>
+            </div>
+          </form>
+        </mat-step>
+      </mat-vertical-stepper>
+    </div>
+
+    <div right>
+      <app-wizard-summary [items]="summaryItems"></app-wizard-summary>
+    </div>
+  </app-wizard-layout>
+</div>

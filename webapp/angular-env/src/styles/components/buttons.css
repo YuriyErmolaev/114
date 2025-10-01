@@ -1,0 +1,97 @@
+.btn,
+.btn-back {
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--app-border-color);
+  background: var(--app-surface-color);
+  color: var(--app-text-color);
+  cursor: pointer;
+}
+
+.btn:hover,
+.btn-back:hover {
+  background: var(--app-surface-muted);
+}
+
+.btn.primary {
+  border-color: transparent;
+  background: hsl(var(--brand-h) var(--brand-s) calc(var(--brand-l) - 5%));
+  color: #fff;
+}
+
+.btn.primary:hover {
+  background: hsl(var(--brand-h) var(--brand-s) calc(var(--brand-l) - 10%));
+}
+
+.btn.primary:active {
+  background: hsl(var(--brand-h) var(--brand-s) calc(var(--brand-l) - 15%));
+}
+
+.btn.wide {
+  width: 100%;
+}
+
+.segmented {
+  display: inline-flex;
+  gap: 4px;
+  padding: 2px;
+  background: var(--app-surface-muted);
+  border: 1px solid var(--app-border-color);
+  border-radius: 8px;
+}
+
+.seg-btn {
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--app-text-color);
+  cursor: pointer;
+}
+
+.seg-btn.active {
+  background: var(--app-surface-color);
+  border-color: var(--app-border-color);
+}
+
+/* Disabled state (global) */
+button:disabled,
+.btn:disabled,
+.btn[disabled],
+.btn-back:disabled,
+.btn-back[disabled],
+.seg-btn:disabled,
+.seg-btn[disabled] {
+  opacity: 0.55; /* paler look */
+  cursor: default; /* no pointer */
+  pointer-events: none; /* prevent hover effects/clicks */
+}
+
+.btn:disabled:hover,
+.btn[disabled]:hover,
+.btn-back:disabled:hover,
+.btn-back[disabled]:hover {
+  background: var(--app-surface-color);
+}
+.seg-btn:disabled:hover,
+.seg-btn[disabled]:hover {
+  background: transparent;
+  border-color: transparent;
+}
+
+button,
+.btn,
+.btn-back,
+.seg-btn {
+  -webkit-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  caret-color: transparent;
+}
+
+button:focus,
+.btn:focus,
+.btn-back:focus,
+.seg-btn:focus {
+  outline: none;
+}

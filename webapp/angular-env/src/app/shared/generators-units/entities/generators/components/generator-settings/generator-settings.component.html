@@ -1,0 +1,14 @@
+<h3 *ngIf="item">{{item.name}} settings</h3>
+
+<!-- <h5 *ngIf="item">Sampling rate default {{item.json_schema.properties.sampling_rate.default}}</h5> -->
+
+<app-dynamic-form
+  *ngIf="item"
+  [schema]="json_schema"
+  [endpoint]="endpoint"
+  [requestType]="requestType"
+  [endpointAddition]="endpointAddition"
+  [item]="json_settings ? json_settings : null"></app-dynamic-form>
+
+<!--[item]="item"-->
+<!--[selects]="selects"-->

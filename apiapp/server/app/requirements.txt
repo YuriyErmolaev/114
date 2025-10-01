@@ -1,0 +1,15 @@
+fastapi
+jsonschema
+starlette
+typing_extensions
+python-dotenv
+pluggy
+requests
+passlib
+pydantic>=2.0
+pydantic_core
+pydantic-settings
+python-multipart
+websockets
+httpx
+humanize

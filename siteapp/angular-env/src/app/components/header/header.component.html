@@ -1,0 +1,16 @@
+<header class="toolbar">
+  <div class="spacer"></div>
+  <button class="btn" *ngIf="auth.isAuthenticated()" (click)="logout()">Выйти</button>
+  <div class="theme-switch" *ngIf="selectedTheme">
+    <span class="theme-icon" aria-hidden="true">{{ selectedTheme === 'dark' ? '🌙' : '☀️' }}</span>
+    <select class="theme-select"
+            [value]="selectedTheme"
+            (change)="onChangeTheme($any($event.target).value)"
+            [title]="labels[selectedTheme]"
+            [attr.aria-label]="labels[selectedTheme]">
+      <option *ngFor="let t of themes" [value]="t">{{ labels[t] }}</option>
+    </select>
+  </div>
+</header>
+
+

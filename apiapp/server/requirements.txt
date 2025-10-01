@@ -1,0 +1,10 @@
+graphviz
+tqdm
+hmmlearn
+scipy
+matplotlib
+numpy
+ipython
+celluloid
+py-feat
+uvicorn

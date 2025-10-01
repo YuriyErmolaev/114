@@ -1,0 +1,25 @@
+.descrForm textarea {
+  width: 100%;
+  min-height: 300px;
+  border-radius: 4px;
+}
+.descrForm textarea, .descrForm textarea:focus {
+  border: 1px solid #ccc;
+}
+
+textarea:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+
+.buttonsBlock{
+  display: flex;
+  justify-content: flex-start;
+  /*margin-top: 20px;*/
+  flex-wrap: wrap;
+}
+
+button {
+  margin: 5px;
+}

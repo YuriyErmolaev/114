@@ -1,0 +1,55 @@
+.btn,
+.btn-back {
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--app-border-color);
+  background: var(--app-surface-color);
+  color: var(--app-text-color);
+  cursor: pointer;
+}
+
+.btn:hover,
+.btn-back:hover {
+  background: var(--app-surface-muted);
+}
+
+.btn.primary {
+  border-color: transparent;
+  background: hsl(var(--brand-h) var(--brand-s) calc(var(--brand-l) - 5%));
+  color: #fff;
+}
+
+.btn.primary:hover {
+  background: hsl(var(--brand-h) var(--brand-s) calc(var(--brand-l) - 10%));
+}
+
+.btn.primary:active {
+  background: hsl(var(--brand-h) var(--brand-s) calc(var(--brand-l) - 15%));
+}
+
+.btn.wide {
+  width: 100%;
+}
+
+.segmented {
+  display: inline-flex;
+  gap: 4px;
+  padding: 2px;
+  background: var(--app-surface-muted);
+  border: 1px solid var(--app-border-color);
+  border-radius: 8px;
+}
+
+.seg-btn {
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--app-text-color);
+  cursor: pointer;
+}
+
+.seg-btn.active {
+  background: var(--app-surface-color);
+  border-color: var(--app-border-color);
+}

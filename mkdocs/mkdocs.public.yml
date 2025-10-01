@@ -1,0 +1,139 @@
+site_name: Аватар
+site_url: !ENV [SITE_URL, "https://features.ai-center.online/docs/"]
+#repo_url:
+
+nav:
+  - Главная: index.md
+  - Быстрый старт:
+    - Обзор: getting-started/overview.md
+    - Для эксперат по психодиагностике: getting-started/quickstart-clinical.md
+    - Для инженеров: getting-started/quickstart-engineering.md
+  - Концепции:
+    - Глоссарий: concepts/domain-glossary.md
+    - Политики данных: concepts/data-governance.md
+    - Стандартизированная процедура этологии: concepts/sop-ethology.md
+    - Таксономия признаков: concepts/feature-taxonomy.md
+  - Этологические исследования (СОП):
+    - Реестр исследований: procedures/sops-index.md
+    - Видеорегистрация: procedures/sop-recording.md
+    - Разметка: procedures/sop-annotation.md
+    - Контроль качества: procedures/sop-quality-control.md
+  - Данные:
+    - Схемы и модели данных: data/data-models.md
+    - Хранение: data/storage-architecture.md
+    - Сбор данных: data/collection-tools.md
+    - Примеры наборов данных: data/datasets-examples.md
+  - Цифровая модель испытуемого:
+    - Конфигурация: patient-model/feature-config.md
+    - Аватар: patient-model/digital-patient.md
+    - Сценарии: patient-model/scenario-examples.md
+  - Архитектура решения:
+    - Обзор: architecture/overview.md
+    - Компоненты: architecture/components.md
+    - Потоки данных: architecture/dataflows.md
+    - Техническая схема: architecture/technical.md
+    - Интеграция: architecture/integration.md
+    - Безопасность: architecture/security.md
+  - Синтез данных:
+    - Архитектура: synthetic-generation/pipeline-overview.md
+    - Извлечение признаков: synthetic-generation/from-sop-to-features.md
+    - Синтез видеозаписей: synthetic-generation/video-synthesis.md
+    - Синтез аудиозаписей: synthetic-generation/audio-synthesis.md
+    - Оценка синтезированных материалов: synthetic-generation/eval-synthetic-vs-real.md
+  - Искусственные нейросети:
+    - Архитектуры: ai-system/model-architecture.md
+    - Обучение: ai-system/training-pipelines.md
+    - Процесс исполнения: ai-system/inference-pipelines.md
+    - Метрики: ai-system/metrics-and-validation.md
+  - Оценка и сравнение:
+    - Дизайн эксперимента: evaluation-and-comparison/experimental-design.md
+    - Шаблоны отчётов: evaluation-and-comparison/reporting-templates.md
+    - Статистика результатов ИНС и обучающиеся: evaluation-and-comparison/clinical-vs-ai-eval.md
+  - Обучение и тестирование:
+    - Учебная программа: training-and-testing-specialists/training-curriculum.md
+    - Практикум: training-and-testing-specialists/practice-with-digital-patient.md
+    - Инструменты тестирования: training-and-testing-specialists/assessment-tools.md
+    - Интерпретация результатов: training-and-testing-specialists/results-interpretation.md
+  - Руководства пользователей:
+    - Обзор интерфейса: user-guides/ui-tour.md
+    - Извелекаемые признаки и поведенческие комплексы: user-guides/howto-create-feature-set.md
+    - Синтез обучающих материалов: user-guides/howto-generate-synthetic-data.md
+    - Модель пациента: user-guides/howto-config-patient-model.md
+    - Сравнение результатов: user-guides/howto-compare-results.md
+    - Режимы обучения и контроля: user-guides/howto-run-exams.md
+  - Для разработчиков:
+    - Обзор API: developer/api-overview.md
+    - OpenAPI: developer/openapi.md
+    - Примеры SDK: developer/sdk-examples.md
+    - Потоки и события: developer/events-and-streams.md
+    - Схемы данных: developer/data-schemas.md
+    - Безопасность: developer/security-and-auth.md
+  - Ответственность и соответствие нормам:
+    - Роли и матрица ответственности: governance/roles-raci.md
+    - Стандарты и этические требования: governance/compliance.md
+    - Риски проекта: governance/risk-register.md
+    - Изменения: governance/change-management.md
+  - Справочник:
+    - FAQ: reference/faq.md
+    - Глоссарий: reference/glossary.md
+    - Термины UI: reference/ui-terminology.md
+    - Источники: reference/citations.md
+  - Релизы:
+    - Дорожная карта: release-notes/roadmap.md
+    - Changelog: release-notes/changelog.md
+
+theme:
+  name: material
+  custom_dir: custom_theme/
+  logo: assets/logo.png
+  favicon: img/favicon.ico
+  locale: ru
+  palette:
+    primary: blue grey
+    media: "(prefers-color-scheme)"
+  extra_css:
+    - stylesheets/extra.css
+  features:
+    - navigation.expand
+#    - navigation.tabs
+    - navigation.indexes
+    - navigation.top
+    - content.code.copy
+    - toc.integrate
+    - search.suggest
+    - search.highlight
+    - content.tabs.link
+    - content.tooltips
+
+plugins:
+  - search
+  - tags
+#  - mermaid2
+#  - mkdocstrings:
+#      handlers:
+#        python:
+#          options:
+#            show_source: false
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - toc:
+      permalink: true
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.keys
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.superfences
+  - pymdownx.tabbed
+  - pymdownx.tasklist:
+      custom_checkbox: true

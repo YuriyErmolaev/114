@@ -1,0 +1,132 @@
+<div class="container" *ngIf="!loading && item; else stateTpl">
+  <div class="report__header">
+    <button class="btn-back" (click)="back()">Назад к списку</button>
+    <h2 class="report__title">Запись</h2>
+  </div>
+  <div class="header">
+    <h2 class="title">{{ item.title }}</h2>
+    <div class="meta">
+      <span><b>UUID:</b> {{ item.uuid }}</span>
+      <span><b>Interviewer:</b> {{ item.interviewer }}</span>
+      <span><b>Status:</b> {{ item.status }}</span>
+    </div>
+  </div>
+
+  <div class="page-actions">
+    <button class="btn btn-primary" [routerLink]="['/interview/edit', uuid]">Редактировать</button>
+  </div>
+
+  <div class="page">
+    <section class="left">
+      <div class="panel card-left">
+        <h3 class="panel-title">{{ item.title }}</h3>
+
+        <div class="video-with-thumbs">
+          <div class="main-video u-bg-video u-border u-radius-10" aria-label="Main camera">
+            <span class="badge">[cam-1]</span>
+            <app-video-viewport
+              [src]="anSrc"
+              [sourceMode]="sourceMode"
+              [overlayRender]="overlayRender"
+              [showGrid]="showGrid"
+              [muted]="true"
+              [autoplay]="autoplay">
+            </app-video-viewport>
+          </div>
+
+          <div class="thumbs">
+            <div class="thumb u-surface-muted u-border u-radius-8"><span class="badge small">[cam-2]</span></div>
+            <div class="thumb u-surface-muted u-border u-radius-8"><span class="badge small">[cam-3]</span></div>
+            <div class="thumb u-surface-muted u-border u-radius-8"><span class="badge small">[cam-4]</span></div>
+          </div>
+        </div>
+
+        <div class="list-block">
+          <div class="list-header u-border-bottom">
+            <h4 class="list-title">Вопросы</h4>
+          </div>
+          <div class="list-body scroll">
+            <ol class="questions">
+              <li class="u-surface u-border u-radius-10">
+                <div class="q-time">чч:мм:сс</div>
+                <div class="q-text">
+                  Текст вопроса #1 Текст вопроса #1 Текст вопроса #1 Текст вопроса #1
+                </div>
+              </li>
+              <li class="u-surface u-border u-radius-10">
+                <div class="q-time">чч:мм:сс</div>
+                <div class="q-text">
+                  Текст вопроса #2Текст вопроса #2Текст вопроса #2Текст вопроса #2
+                </div>
+              </li>
+              <li class="u-surface u-border u-radius-10">
+                <div class="q-time">чч:мм:сс</div>
+                <div class="q-text">
+                  Текст вопроса #3 Текст вопроса #3 Текст вопроса #3 Текст вопроса #3
+                </div>
+              </li>
+            </ol>
+          </div>
+        </div>
+
+
+        <div class="footer-actions">
+          <button class="btn primary wide" (click)="onFinish()">Finish interview</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="right">
+<!--      <div class="display-type">-->
+<!--        <span>View mode:</span>-->
+<!--        <div class="segmented">-->
+<!--          <button class="seg-btn" [class.active]="displayType==='chart'" (click)="displayType='chart'">Chart</button>-->
+<!--          <button class="seg-btn" [class.active]="displayType==='values'" (click)="displayType='values'">Values</button>-->
+<!--          <button class="seg-btn" [class.active]="displayType==='sync'" (click)="displayType='sync'">Sync</button>-->
+<!--        </div>-->
+<!--      </div>-->
+
+      <div class="panel">
+        <h3>Video blend shapes</h3>
+        <div class="panel-content single">
+          <div class="chart-area" *ngIf="displayType==='chart' || displayType==='sync'">
+            <app-blend-shapes-chart
+              [items]="videoBlendShapes$ | async"
+              [selectedNames]="selectedNames"
+              [view]="'chart'">
+            </app-blend-shapes-chart>
+          </div>
+          <div class="values-area" *ngIf="displayType==='values' || displayType==='sync'">
+            <app-blend-shapes-chart
+              [items]="videoBlendShapes$ | async"
+              [selectedNames]="selectedNames"
+              [view]="'bars'">
+            </app-blend-shapes-chart>
+          </div>
+
+          <div class="actions in-panel">
+            <button class="primary" (click)="startAnalysis()">Start deep analysis</button>
+            <button class="secondary" disabled>Download deep analysis</button>
+          </div>
+        </div>
+      </div>
+
+<!--      <div class="panel">-->
+<!--        <h3>Display data</h3>-->
+<!--        <div class="panel-content single">-->
+<!--          <app-blend-shapes-picker-->
+<!--            [items]="videoBlendShapes$ | async"-->
+<!--            [(selectedNames)]="selectedNames"-->
+<!--            [filter]="filter"-->
+<!--            (filterChange)="onFilterChange($event)">-->
+<!--          </app-blend-shapes-picker>-->
+<!--        </div>-->
+<!--      </div>-->
+    </section>
+  </div>
+</div>
+
+<ng-template #stateTpl>
+  <div *ngIf="loading">Loading…</div>
+  <div *ngIf="!loading && notFound">Not found</div>
+</ng-template>

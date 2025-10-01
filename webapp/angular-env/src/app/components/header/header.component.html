@@ -1,0 +1,53 @@
+<header class="header" role="banner">
+  <div class="header__left">
+    <a routerLink="/home">
+      <span class="logo">
+        <img class="logo-circle" src="assets/img/logo.png" alt="Logo"/>
+      </span>
+      <span class="app-name" aria-label="Avatar">
+          Система распознавания <br> мимико-пантомимических <br> и речевых признаков
+      </span>
+    </a>
+  </div>
+
+  <div class="header__right">
+    <span class="header__right-text"></span>
+
+    <nav class="main-nav" aria-label="Primary">
+      <a routerLink="/dashboard" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Главная</a>
+      <a routerLink="/alerts" routerLinkActive="active">Уведомления</a>
+      <a routerLink="/activity" routerLinkActive="active">Активность</a>
+    </nav>
+
+    <div class="system-menu" [class.open]="isSystemOpen">
+      <button #systemBtn type="button" class="system-trigger" aria-haspopup="menu" [attr.aria-expanded]="isSystemOpen" (click)="toggleSystem()" (keydown.enter)="toggleSystem()" (keydown.space)="$event.preventDefault(); toggleSystem()">
+        Система
+        <span class="caret" aria-hidden="true"></span>
+      </button>
+      <ul #systemMenu *ngIf="isSystemOpen" class="dropdown" role="menu" (keydown)="onMenuKeydown($event)">
+        <li role="none">
+          <button type="button" role="menuitem" (click)="openQuickStart()" (keydown.enter)="openQuickStart()" (keydown.space)="$event.preventDefault(); openQuickStart()">Быстрый старт</button>
+        </li>
+        <li role="none">
+          <button type="button" role="menuitem" (click)="goSettings()" (keydown.enter)="goSettings()" (keydown.space)="$event.preventDefault(); goSettings()">Настройки</button>
+        </li>
+        <li role="none">
+          <button type="button" role="menuitem" (click)="logout()" (keydown.enter)="logout()" (keydown.space)="$event.preventDefault(); logout()">Выйти</button>
+        </li>
+      </ul>
+    </div>
+
+    <div class="theme-switch" *ngIf="selectedTheme">
+      <span class="theme-icon" aria-hidden="true">{{ selectedTheme === 'dark' ? '🌙' : '☀️' }}</span>
+      <select class="theme-select"
+              [(ngModel)]="selectedTheme"
+              (ngModelChange)="onChangeTheme($event)"
+              [title]="labels[selectedTheme]"
+              [attr.aria-label]="labels[selectedTheme]">
+        <option *ngFor="let t of themes" [value]="t">{{ labels[t] }}</option>
+      </select>
+    </div>
+  </div>
+
+  <app-quick-start-modal [open]="isQuickStartOpen" (closed)="closeQuickStart()"></app-quick-start-modal>
+</header>

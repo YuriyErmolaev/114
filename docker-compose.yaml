@@ -1,0 +1,17 @@
+name: ${APP_ENV:-app}-${APP_NAME:-avatar}
+
+include:
+  - ./docker-compose.siteapp.yaml
+  - ./docker-compose.webapp.yaml
+  - ./docker-compose.mkdocs.yaml
+  - ./docker-compose.apiapp.yaml
+  - ./docker-compose.keycloak.yaml
+#  - ./docker-compose.rabbitmq.yaml
+  - ./docker-compose.postgres.yaml
+
+# Networks for different APP_ENV
+networks:
+  app-net:
+  dev-net:
+  test-net:
+  demo-net:

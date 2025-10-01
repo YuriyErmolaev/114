@@ -1,0 +1,19 @@
+:host {
+  display: grid;
+  grid-template-columns:
+    minmax(0, var(--wiz-main-col, 2fr))
+    minmax(var(--wiz-side-min, 360px), var(--wiz-side-col, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+::ng-deep [right] {
+  position: sticky;
+  top: 16px;
+  align-self: start;
+  min-width: var(--wiz-side-min, 360px);
+  box-sizing: border-box;
+}
+@media (max-width: 900px) {
+  :host { grid-template-columns: 1fr; }
+  ::ng-deep [right] { position: static; min-width: 0; }
+}

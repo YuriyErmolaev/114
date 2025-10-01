@@ -1,0 +1,42 @@
+
+<!--<h5 *ngIf="schema">Sampling rate default from form component {{schema.properties.sampling_rate.default}}</h5>-->
+<!-- <h5 *ngIf="schema">Sampling rate default from form component {{schema.properties['sampling_rate']?.default}}</h5> -->
+
+
+<form [formGroup]="form" class="clearFormCard" (ngSubmit)="onSubmit()">
+  <div *ngFor="let field of schema.properties | keyvalue">
+    <label *ngIf="field.value && field.value.title">{{ field.value.title }}</label>
+    <select *ngIf="field.value?.enum" formControlName="{{ field.key }}">
+      <option *ngFor="let option of field.value.enum" [value]="option">{{ option }}</option>
+    </select>
+    <input *ngIf="!field.value?.enum && field.value?.type === 'string'" formControlName="{{ field.key }}" type="text" />
+    <textarea
+      *ngIf="field.value?.type === 'textarea' && !field.value['ui:widget']"
+      formControlName="{{ field.key }}"></textarea>
+    <app-media-uploader
+      *ngIf="field.value['ui:widget'] === 'media-uploader'"
+      [endpoint]="endpoint"
+      [form]="form"
+      [controlName]="field.key"
+    ></app-media-uploader>
+    <input *ngIf="field.value?.type === 'integer'" formControlName="{{ field.key }}" type="number" />
+    <input *ngIf="field.value?.type === 'number'"
+           formControlName="{{ field.key }}"
+           type="number" />
+    <select *ngIf="field.value?.type === 'select'" formControlName="{{ field.key }}">
+      <option *ngFor="let option of field.value?.options" [value]="option.value">{{ option.label }}</option>
+    </select>
+    <label *ngIf="field.value?.type === 'file'" class="custom-file-upload button">
+      file upload
+      <input type="file" (change)="onFileChange($event, field.key)" />
+    </label>
+    <div *ngIf="form.get(field.key)?.invalid && form.get(field.key)?.touched">
+    <span *ngIf="form.controls[field.key]?.hasError('required')">This field is required.</span>
+      <span *ngIf="form.controls[field.key] && form.controls[field.key].hasError('minLength')">
+        Minimum length is {{ field.value.minLength }}
+      </span>
+      <span *ngIf="form.controls[field.key].hasError('min')">Minimum value is {{ field.value.minimum }}</span>
+    </div>
+  </div>
+  <button type="submit" [disabled]="form.invalid">Submit</button>
+</form>

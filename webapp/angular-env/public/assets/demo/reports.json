@@ -1,0 +1,71 @@
+[
+  {
+    "uuid": "rpt-1001",
+    "interviewUuid": "e90dfff4-cd6c-467b-8ead-3d443661ddde",
+    "subjectName": "Иван Иванов",
+    "interviewer": "Иванов",
+    "date": "2025-09-15T10:24:00Z",
+    "summaryScore": 72,
+    "status": "Ready",
+    "summaryText": "Moderate engagement, stable affect. Confidence is adequate; slight tension detected in challenging questions.",
+    "emotions": { "Neutral": 58, "Joy": 18, "Surprise": 6, "Sadness": 8, "Anger": 4, "Fear": 3, "Disgust": 3 },
+    "traits": [
+      { "name": "Openness", "score": 64 },
+      { "name": "Conscientiousness", "score": 70 },
+      { "name": "Extraversion", "score": 52 },
+      { "name": "Agreeableness", "score": 61 },
+      { "name": "Neuroticism", "score": 38 }
+    ],
+    "risks": { "stressLevel": "Medium", "deceptionLikelihood": "Low" },
+    "recommendations": [
+      "Provide structured tasks to leverage conscientious style.",
+      "Use short breaks during complex topics to reduce tension."
+    ]
+  },
+  {
+    "uuid": "rpt-1002",
+    "interviewUuid": "6b7bf3fb-1a3a-4a5a-9ef8-9b0d2f4cf111",
+    "subjectName": "Петр Петров",
+    "interviewer": "Петров",
+    "date": "2025-09-16T14:03:00Z",
+    "summaryScore": 61,
+    "status": "Ready",
+    "summaryText": "Variable emotional dynamics. Respondent shows curiosity, but attention fluctuates.",
+    "emotions": { "Neutral": 47, "Joy": 12, "Surprise": 10, "Sadness": 12, "Anger": 7, "Fear": 7, "Disgust": 5 },
+    "traits": [
+      { "name": "Openness", "score": 71 },
+      { "name": "Conscientiousness", "score": 49 },
+      { "name": "Extraversion", "score": 58 },
+      { "name": "Agreeableness", "score": 55 },
+      { "name": "Neuroticism", "score": 46 }
+    ],
+    "risks": { "stressLevel": "Medium", "deceptionLikelihood": "Medium" },
+    "recommendations": [
+      "Clarify expectations and deadlines to improve task follow-through.",
+      "Keep sessions shorter with clear checkpoints."
+    ]
+  },
+  {
+    "uuid": "rpt-1003",
+    "interviewUuid": "c0b0a5ab-0b22-4a79-8b76-3c7b0fd3aa22",
+    "subjectName": "Сидор Сидоров",
+    "interviewer": "Сидоров",
+    "date": "2025-09-17T09:10:00Z",
+    "summaryScore": 83,
+    "status": "Processing",
+    "summaryText": "Consistent performance, high self-regulation, positive affect predominates.",
+    "emotions": { "Neutral": 62, "Joy": 22, "Surprise": 5, "Sadness": 4, "Anger": 3, "Fear": 2, "Disgust": 2 },
+    "traits": [
+      { "name": "Openness", "score": 68 },
+      { "name": "Conscientiousness", "score": 82 },
+      { "name": "Extraversion", "score": 60 },
+      { "name": "Agreeableness", "score": 66 },
+      { "name": "Neuroticism", "score": 24 }
+    ],
+    "risks": { "stressLevel": "Low", "deceptionLikelihood": "Low" },
+    "recommendations": [
+      "Assign complex, long-horizon tasks with autonomy.",
+      "Use peer collaboration to capitalize on stable communication."
+    ]
+  }
+]

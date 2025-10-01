@@ -1,0 +1,78 @@
+<div *ngIf="loading">Загрузка...</div>
+<div *ngIf="!loading && notFound">Отчет не найден</div>
+
+<div *ngIf="!loading && item as r">
+  <div class="report">
+    <div class="report__header">
+      <button class="btn-back" (click)="back()">Назад к списку</button>
+      <h2 class="report__title">Отчет по интервью</h2>
+    </div>
+    <div class="page-actions">
+      <button class="btn btn-primary" [routerLink]="['/report/edit', uuid]">Редактировать</button>
+    </div>
+
+    <section class="card">
+      <div class="meta">
+        <div class="meta__item"><span class="meta__label">ID</span><span class="meta__value">{{ r.uuid }}</span></div>
+        <div class="meta__item"><span class="meta__label">Интервью</span><span class="meta__value">{{ r.interviewUuid }}</span></div>
+        <div class="meta__item"><span class="meta__label">ФИО</span><span class="meta__value">{{ r.subjectName }}</span></div>
+        <div class="meta__item"><span class="meta__label">Интервьюер</span><span class="meta__value">{{ r.interviewer }}</span></div>
+        <div class="meta__item"><span class="meta__label">Дата</span><span class="meta__value">{{ r.date | date:'medium' }}</span></div>
+        <div class="meta__item">
+          <span class="meta__label">Достоверность анализа и прогноза</span>
+          <span class="meta__value accent" title="0–100%. Higher means stronger data quality and model confidence">{{ r.summaryScore }}%</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h3 class="section-title">Краткое резюме</h3>
+      <p class="summary">{{ r.summaryText }}</p>
+    </section>
+
+    <section class="grid-2">
+      <div class="card">
+        <h3 class="section-title">Эмоциональный профиль</h3>
+        <ul class="kv-list">
+          <li class="kv" *ngFor="let kv of (r.emotions | keyvalue)">
+            <span class="kv__key">{{ kv.key }}</span>
+            <span class="kv__value">{{ kv.value }}%</span>
+          </li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3 class="section-title">Черты личности</h3>
+        <ul class="kv-list">
+          <li class="kv" *ngFor="let t of r.traits; trackBy: trackByIndex">
+            <span class="kv__key">{{ t.name }}</span>
+            <span class="kv__value">{{ t.score }}%</span>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="grid-2">
+      <div class="card">
+        <h3 class="section-title">Риски</h3>
+        <div class="risks">
+          <div class="risk-row">
+            <span class="risk-label">Стресс</span>
+            <span class="risk-value">{{ r.risks.stressLevel }}</span>
+          </div>
+          <div class="risk-row">
+            <span class="risk-label">Вероятность обмана</span>
+            <span class="risk-value">{{ r.risks.deceptionLikelihood }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 class="section-title">Рекомендации</h3>
+        <ul class="bullets">
+          <li *ngFor="let rec of r.recommendations; trackBy: trackByIndex">{{ rec }}</li>
+        </ul>
+      </div>
+    </section>
+  </div>
+</div>

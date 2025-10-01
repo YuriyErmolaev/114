@@ -1,0 +1,37 @@
+stages:
+  - build
+  - deploy
+
+.base_ruff:
+  stage: build
+  interruptible: true
+  image:
+    name: ghcr.io/astral-sh/ruff:0.11.12-alpine
+  before_script:
+    - cd $CI_PROJECT_DIR
+    - ruff --version
+
+Ruff Check:
+  extends: .base_ruff
+  script:
+    - ruff check --output-format=gitlab > code-quality-report.json
+  artifacts:
+    reports:
+      codequality: $CI_PROJECT_DIR/code-quality-report.json
+
+pages:
+  stage: deploy
+  image: python:3.11-alpine
+  before_script:
+    - pip install mkdocs mkdocs-material mkdocstrings-python
+  script:
+    - ls -la
+    - mkdir -p server
+    - cp -r apiapp/server/* server/
+    - cd mkdocs && mkdocs build
+    - mv public ../public
+  artifacts:
+    paths:
+      - public  
+  only:
+    - full_template_v2

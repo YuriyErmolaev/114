@@ -1,0 +1,18 @@
+<div *ngIf="isLoading" class="preloader-container">
+    <div class="preloader"></div>
+</div>
+<div *ngIf="csvData && csvData.length > 0" class="table-container">
+    <table>
+        <thead>
+        <tr>
+            <th *ngFor="let header of getHeaders()">{{ header }}</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr *ngFor="let row of csvData.slice(0, 20)">
+            <td *ngFor="let header of getHeaders()">{{ row[header] }}</td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+<p *ngIf="!csvData || csvData.length === 0">No data available</p>

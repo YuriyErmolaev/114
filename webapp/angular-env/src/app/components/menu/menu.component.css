@@ -1,0 +1,81 @@
+.sidenav {
+  position: relative;
+  width: 240px;
+  flex: 0 0 240px;
+  transition: width 180ms ease;
+  overflow: hidden;
+}
+
+.sidenav.collapsed {
+  width: 64px;
+  flex: 0 0 64px;
+}
+
+.sidenav__toggle {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--app-text-muted);
+  cursor: pointer;
+}
+
+.sidenav__toggle:hover,
+.sidenav__toggle:focus {
+  background: var(--app-surface-muted);
+  color: var(--app-text-color);
+}
+
+.sidenav__list {
+  list-style: none;
+  padding: 8px;
+  margin: 0;
+  padding-top: 48px;
+}
+
+.sidenav__list a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  text-decoration: none;
+  color: var(--app-text-muted);
+}
+
+.sidenav__list a:hover,
+.sidenav__list a:focus {
+  background: var(--app-surface-muted);
+  color: var(--app-text-color);
+}
+
+.sidenav__icon {
+  font-size: 24px;
+  width: 24px;
+  height: 24px;
+  line-height: 24px;
+}
+
+.sidenav.collapsed .sidenav__label {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .sidenav { width: 64px; flex: 0 0 64px; }
+  .sidenav__toggle { display: none; }
+}
+
+
+/* Center icons when collapsed */
+.sidenav.collapsed .sidenav__list a {
+  justify-content: center;
+  padding-left: 0;
+  padding-right: 0;
+}
