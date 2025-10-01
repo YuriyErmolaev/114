@@ -1,0 +1,34 @@
+{
+  "labels": [
+    "AU01",
+    "AU02",
+    "AU04",
+    "AU05",
+    "AU06",
+    "AU07",
+    "AU09",
+    "AU10",
+    "AU11",
+    "AU12",
+    "AU14",
+    "AU15",
+    "AU17",
+    "AU20",
+    "AU23",
+    "AU24",
+    "AU25",
+    "AU26",
+    "AU28",
+    "AU43"
+  ],
+  "raw_data_multiplier": 100,
+  "random_state": 0,
+  "train_validate_border": 317,
+  "n_components": 15,
+  "lib_versions": {
+    "python": "3.11.13",
+    "numpy": "1.23.5",
+    "scipy": "1.15.3",
+    "hmmlearn": "0.3.3"
+  }
+}
