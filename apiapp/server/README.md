@@ -13,3 +13,16 @@ python avatar_animation.py --csv output_video_analize_2.csv --out avatar_real.gi
 
 
 python face_avatar_from_csv.py --csv output_video_analize_2.csv --out avatar_face_real_2.gif --source real --fps 12
+
+
+
+
+
+
+
+ 
+python predict_video_to_csv.py --video 1_video.mp4 --output output_video_analize_nb.csv --skip-frames 25 --fps 25 --face-threshold 0.95
+
+
+
+
