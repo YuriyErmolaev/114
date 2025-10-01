@@ -173,6 +173,109 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
     return p.parse_args(argv)
 
 
+def _get_au(au_map: dict, name: str, scale: float = 1.0) -> float:
+    try:
+        v = float(au_map.get(name, 0.0))
+    except Exception:
+        v = 0.0
+    return max(-1.0, min(1.0, v * scale))
+
+
+def _plot_face_fallback(ax, au_map: dict) -> None:
+    """Draw a simple schematic face using Matplotlib patches based on a few AUs.
+    This is used when py-feat's plot_face is unavailable.
+    Supported AUs (if present): AU01, AU02, AU04 (brows), AU06/AU07 (eyes),
+    AU12 (smile), AU15 (depress), AU20 (stretcher).
+    """
+    import numpy as _np
+    from matplotlib.patches import Circle, Arc
+
+    # Base params
+    ax.set_xlim(-1.0, 1.0)
+    ax.set_ylim(-1.2, 1.2)
+    ax.set_aspect("equal")
+
+    # Face outline
+    face = Circle((0, 0), radius=0.98, linewidth=2, edgecolor="black", facecolor=(1, 1, 1, 0.0))
+    ax.add_patch(face)
+
+    # AU helpers
+    au01 = _get_au(au_map, "AU01")  # inner brow raiser
+    au02 = _get_au(au_map, "AU02")  # outer brow raiser
+    au04 = _get_au(au_map, "AU04")  # brow lowerer
+    au06 = _get_au(au_map, "AU06")  # cheek raiser (eye narrowing)
+    au07 = _get_au(au_map, "AU07")  # lid tightener (eye narrowing)
+    au12 = _get_au(au_map, "AU12")  # lip corner puller (smile)
+    au15 = _get_au(au_map, "AU15")  # lip corner depressor (frown)
+    au20 = _get_au(au_map, "AU20")  # lip stretcher
+
+    # Eyes position
+    eye_y = 0.35
+    eye_dx = 0.35
+    eye_base_r = 0.10
+    close_amt = max(0.0, min(1.0, 0.5 * abs(au06) + 0.5 * abs(au07)))
+    eye_r_y = eye_base_r * (1.0 - 0.7 * close_amt)
+    eye_r_x = eye_base_r
+
+    # Eyes (as ellipses approximated by scaled circles via transform)
+    left_eye = Circle((-eye_dx, eye_y), radius=eye_base_r, linewidth=1.5, edgecolor="black", facecolor=(0, 0, 0, 0))
+    right_eye = Circle((eye_dx, eye_y), radius=eye_base_r, linewidth=1.5, edgecolor="black", facecolor=(0, 0, 0, 0))
+    # Simulate vertical squint by drawing horizontal arcs over eyes depending on close_amt
+    ax.add_patch(left_eye)
+    ax.add_patch(right_eye)
+    if close_amt > 0:
+        lid_angle = max(5, int(170 * (1.0 - close_amt)))
+        ax.add_patch(Arc((-eye_dx, eye_y), 2*eye_r_x, 2*eye_r_y, angle=0, theta1=180-lid_angle, theta2=180+lid_angle, lw=1.2))
+        ax.add_patch(Arc((eye_dx, eye_y), 2*eye_r_x, 2*eye_r_y, angle=0, theta1=0-lid_angle, theta2=0+lid_angle, lw=1.2))
+
+    # Brows
+    brow_raise = 0.15 * (max(0.0, au01) + max(0.0, au02))
+    brow_lower = 0.18 * max(0.0, au04)
+    brow_y = 0.58 + brow_raise - brow_lower
+    brow_len = 0.28
+    # left brow
+    ax.plot([-eye_dx - brow_len/2, -eye_dx + brow_len/2], [brow_y + 0.03*au02, brow_y - 0.02*au01], color="black", lw=2)
+    # right brow
+    ax.plot([eye_dx - brow_len/2, eye_dx + brow_len/2], [brow_y - 0.02*au01, brow_y + 0.03*au02], color="black", lw=2)
+
+    # Nose (simple)
+    ax.plot([0, -0.05, 0.0], [0.35, 0.05, -0.1], color="black", lw=1)
+
+    # Mouth curvature based on smile vs frown vs stretch
+    smile = max(0.0, au12)
+    frown = max(0.0, au15)
+    stretch = max(0.0, au20)
+    mouth_y = -0.35 + 0.08 * (smile - frown)
+    mouth_w = 0.8 + 0.3 * stretch
+    mouth_h = 0.25 * (smile - frown)
+    mouth_h = max(-0.35, min(0.5, mouth_h))
+    # Draw mouth as an arc; positive height -> smiling arc, negative -> inverted
+    if mouth_h >= 0:
+        ax.add_patch(Arc((0, mouth_y), mouth_w, 0.6 * (0.4 + mouth_h), angle=0, theta1=200, theta2=340, lw=2))
+    else:
+        ax.add_patch(Arc((0, mouth_y), mouth_w, 0.6 * (0.4 + abs(mouth_h)), angle=0, theta1=20, theta2=160, lw=2))
+
+
+def _try_plot_face(ax, au_map: dict, row: np.ndarray) -> None:
+    """Try py-feat's plot_face; fallback to our schematic face if unavailable/failed."""
+    if 'plot_face' in globals() and callable(plot_face):
+        try:
+            plot_face(model=None, ax=ax, au=au_map)
+            return
+        except Exception:
+            try:
+                plot_face(ax=ax, au=au_map)
+                return
+            except Exception:
+                try:
+                    plot_face(model=None, ax=ax, au=row)
+                    return
+                except Exception:
+                    pass
+    # Fallback
+    _plot_face_fallback(ax, au_map)
+
+
 def main(argv: Optional[Sequence[str]] = None) -> int:
     args = parse_args(argv)
 
@@ -181,9 +284,6 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         print(f"[error] CSV not found: {args.csv}", file=sys.stderr)
         return 2
 
-    if plot_face is None:
-        print("[error] py-feat not available (feat.plotting.plot_face import failed)", file=sys.stderr)
-        return 2
 
     # Load
     try:
@@ -250,15 +350,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     # Prefer mapping AU name->value if supported by installed py-feat; otherwise vector
     for row in iterator:
         au_map = {name: float(val) for name, val in zip(au_names, row.tolist())}
-        try:
-            # as per spec: provide model=None explicitly
-            plot_face(model=None, ax=ax, au=au_map)
-        except Exception:
-            try:
-                plot_face(ax=ax, au=au_map)
-            except Exception:
-                # Last resort: positional vector
-                plot_face(model=None, ax=ax, au=row)
+        _try_plot_face(ax, au_map, row)
         camera.snap()
         # Clear for next frame but keep background and title
         ax.cla()
@@ -279,12 +371,54 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     # Save GIF
     try:
         anim.save(str(args.out), writer="pillow", dpi=int(args.dpi), fps=int(args.fps))
+        print(f"Frames: {n_frames}, AUs: {au_dim}, saved to: {args.out}")
+        return 0
     except Exception as e:
-        print(f"[error] Failed to save GIF: {e}", file=sys.stderr)
-        return 6
+        # Fallback: manual rendering to GIF via Pillow
+        try:
+            from PIL import Image
+        except Exception as e_pil:
+            print(f"[error] Failed to save GIF (Matplotlib) and Pillow not available: {e} / {e_pil}", file=sys.stderr)
+            return 6
 
-    print(f"Frames: {n_frames}, AUs: {au_dim}, saved to: {args.out}")
-    return 0
+        frames: List[Image.Image] = []
+        # Re-render frames on a fresh figure to collect images
+        plt.close(fig)
+        fig2, ax2 = plt.subplots(figsize=figsize_in, dpi=int(args.dpi))
+        try:
+            fig2.patch.set_facecolor(args.bgcolor)
+            ax2.set_facecolor(args.bgcolor)
+        except Exception:
+            pass
+        ax2.set_axis_off()
+        ax2.set_title(args.title)
+        for row in values:
+            au_map = {name: float(val) for name, val in zip(au_names, row.tolist())}
+            _try_plot_face(ax2, au_map, row)
+            fig2.canvas.draw()
+            rgba = np.asarray(fig2.canvas.buffer_rgba())
+            rgb = rgba[:, :, :3] if rgba.shape[2] >= 3 else rgba
+            frames.append(Image.fromarray(rgb))
+            ax2.cla()
+            try:
+                ax2.set_facecolor(args.bgcolor)
+            except Exception:
+                pass
+            ax2.set_axis_off()
+            ax2.set_title(args.title)
+        plt.close(fig2)
+
+        if not frames:
+            print("[error] No frames captured for GIF.", file=sys.stderr)
+            return 7
+        duration_ms = int(round(1000.0 / max(1, int(args.fps))))
+        try:
+            frames[0].save(str(args.out), save_all=True, append_images=frames[1:], format="GIF", loop=0, duration=duration_ms)
+            print(f"Frames: {n_frames}, AUs: {au_dim}, saved (fallback) to: {args.out}")
+            return 0
+        except Exception as e_save:
+            print(f"[error] Failed to save GIF via Pillow fallback: {e_save}", file=sys.stderr)
+            return 8
 
 
 if __name__ == "__main__":  # pragma: no cover

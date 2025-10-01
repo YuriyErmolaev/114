@@ -9,3 +9,7 @@ python emotions_plot.py --csv output_video_analize_2.csv --out emotions.png
 
 
 python avatar_animation.py --csv output_video_analize_2.csv --out avatar_real.gif --source real
+
+
+
+python face_avatar_from_csv.py --csv output_video_analize_2.csv --out avatar_face_real_2.gif --source real --fps 12
