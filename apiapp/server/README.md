@@ -34,3 +34,14 @@ python face_avatar_to_html.py --csv output_video_analize_nb.csv --source real --
 
 
 
+python face_avatar_to_html.py --csv output_video_analize.csv --source real --out avatar_face_nb_2.html --fps 10 --dpi 300 --size 400x500
+
+
+
+python face_avatar_to_html.py --csv output_video_analize.csv --source real --out avatar_face_nb_3.html --fps 10 --dpi 300 --size 400x500
+
+
+python face_avatar_to_html.py --csv output_video_analize.csv --source real --out avatar_face_nb_4.html --fps 5 --size 400x500
+
+
+python face_avatar_to_html.py --csv output_video_analize.csv --source real --out avatar_face_nb_5.html --fps 5 --size 400x500

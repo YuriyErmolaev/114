@@ -106,37 +106,33 @@ def _load_csv(path: Path):
 
 
 def _collect_au_columns_real(df) -> List[str]:
-    """Return AU columns for source=real. Prefer AUxx; else AUxx_r renamed to AUxx."""
+    """Return AU columns for source=real preserving CSV order.
+    Prefer AUxx_r (continuous intensities, like Fex.aus). If absent, use AUxx as fallback.
+    """
     cols = list(df.columns)
     au_pat = re.compile(r"^AU(\d{2})$")
     aur_pat = re.compile(r"^AU(\d{2})_r$")
 
-    au_cols = [c for c in cols if isinstance(c, str) and au_pat.match(c)]
-    if au_cols:
-        au_cols.sort(key=lambda c: int(au_pat.match(c).group(1)))  # type: ignore
-        return au_cols
-
     aur_cols = [c for c in cols if isinstance(c, str) and aur_pat.match(c)]
     if aur_cols:
-        aur_cols.sort(key=lambda c: int(aur_pat.match(c).group(1)))  # type: ignore
-        return aur_cols
+        return aur_cols  # keep original order from CSV/DataFrame
+
+    au_cols = [c for c in cols if isinstance(c, str) and au_pat.match(c)]
+    if au_cols:
+        return au_cols  # keep original order from CSV/DataFrame
 
     return []
 
 
 def _collect_au_columns_hmm(df) -> List[str]:
-    """Return HMM expected AU columns: HMM_AUexp_AUxx sorted by AU number."""
+    """Return HMM AU columns preserving CSV order: HMM_AUexp_AUxx as they appear."""
     cols = list(df.columns)
     pat = re.compile(r"^HMM_AUexp_(AU(\d{2}))$")
-    pairs: List[Tuple[int, str]] = []
+    hmm_cols: List[str] = []
     for c in cols:
-        if isinstance(c, str):
-            m = pat.match(c)
-            if m:
-                au_num = int(m.group(2))
-                pairs.append((au_num, c))
-    pairs.sort(key=lambda t: t[0])
-    return [c for _, c in pairs]
+        if isinstance(c, str) and pat.match(c):
+            hmm_cols.append(c)
+    return hmm_cols
 
 
 def _values_from_columns(df, cols: List[str]) -> Tuple[np.ndarray, List[str]]:
@@ -326,19 +322,46 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             return 4
 
     # Build array and AU names
-    values, au_names = _values_from_columns(df, cols)
+    using_artifacts = False
+    values: np.ndarray
+    au_names: List[str]
+    # If notebook artifacts are available, prefer them for 1:1 parity (X / raw_data_multiplier)
+    try:
+        art_dir = Path("artifacts")
+        X_path = art_dir / "X.npy"
+        meta_path = art_dir / "meta.json"
+        if args.source == "real" and X_path.exists() and meta_path.exists():
+            import json
+            with open(meta_path, "r", encoding="utf-8") as _f:
+                meta = json.load(_f)
+            raw_mult = float(meta.get("raw_data_multiplier", 1.0))
+            labels_meta = list(meta.get("labels", []))
+            X = np.load(X_path)
+            if X.ndim == 2 and X.shape[1] == len(labels_meta) and X.shape[0] > 0:
+                values = X.astype(float) / (raw_mult if raw_mult != 0 else 1.0)
+                au_names = labels_meta
+                using_artifacts = True
+            else:
+                # Fallback to CSV path if shapes do not match expectations
+                values, au_names = _values_from_columns(df, cols)
+        else:
+            values, au_names = _values_from_columns(df, cols)
+    except Exception:
+        values, au_names = _values_from_columns(df, cols)
+
     if values.size == 0:
         print("[error] AU matrix is empty.", file=sys.stderr)
         return 5
 
-    # Sort AUs numerically by AUxx
-    au_pat = re.compile(r"^AU(\d{2})$")
-    order = sorted(
-        range(len(au_names)),
-        key=lambda i: int(au_pat.match(au_names[i]).group(1)) if au_pat.match(au_names[i]) else 999,  # type: ignore
-    )
-    values = values[:, order]
-    au_names = [au_names[i] for i in order]
+    # Notebook parity: for CSV path shift each AU by its minimum to make the baseline zero
+    # (X/raw_data_multiplier in the notebook equals observation - min(observation))
+    if not using_artifacts:
+        try:
+            col_mins = np.nanmin(values, axis=0)
+            values = values - col_mins
+        except Exception:
+            pass
+
 
     # Apply frame limit then step
     if isinstance(args.limit, int) and args.limit is not None and args.limit > 0:
@@ -358,12 +381,13 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
 
     # Prepare figure
     try:
-        figsize_in = _parse_size(args.size, args.dpi)
+        # Force nb-parity for stroke thickness: draw at 100 dpi and scale figsize to keep pixel size
+        figsize_in = _parse_size(args.size, 100)
     except argparse.ArgumentTypeError as e:
         print(f"[error] {e}", file=sys.stderr)
         return 2
 
-    fig, ax = plt.subplots(figsize=figsize_in, dpi=int(args.dpi))
+    fig, ax = plt.subplots(figsize=figsize_in, dpi=100)
     # Ensure a canvas is attached (important for to_jshtml on Agg backend)
     try:
         if fig.canvas is None:
