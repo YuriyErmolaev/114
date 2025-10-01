@@ -39,6 +39,21 @@ try:  # pragma: no cover - best-effort compatibility
 except Exception:
     pass
 
+# Compatibility shim for environments where lib2to3 is unavailable (e.g., Python 3.12+)
+try:  # pragma: no cover - best-effort
+    import sys as _sys, types as _types  # noqa: F401
+    if 'lib2to3.pytree' not in _sys.modules:
+        _lib2to3 = _types.ModuleType('lib2to3')
+        _pytree = _types.ModuleType('lib2to3.pytree')
+        def convert(node):  # minimal stub used by py-feat's ResMaskNet wrapper
+            return node
+        _pytree.convert = convert  # type: ignore
+        _lib2to3.pytree = _pytree  # type: ignore
+        _sys.modules['lib2to3'] = _lib2to3
+        _sys.modules['lib2to3.pytree'] = _pytree
+except Exception:
+    pass
+
 # Prefer py-feat's read_feat for CSVs if available
 try:
     from feat.utils.io import read_feat as _read_feat  # type: ignore
@@ -368,10 +383,6 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     ax.set_axis_off()
     ax.set_title(args.title)
 
-    # Mirror notebook behavior: rely on feat.plotting.plot_face during rendering
-    if not ('plot_face' in globals() and callable(plot_face)):
-        print("[error] Не удалось импортировать feat.plotting.plot_face (пакет py-feat). Запустите в той же среде, что и блокнот, или установите зависимости.", file=sys.stderr)
-        return 2
     # Keep layout set upfront (axis off, title, bgcolor) and do not clear between frames
 
     # Pre-render all frames with Celluloid.Camera (notebook parity)
