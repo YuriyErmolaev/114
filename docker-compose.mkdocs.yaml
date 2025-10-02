@@ -1,12 +1,17 @@
 services:
   mkdocs:
     image: ${DOCKER_REGISTRY}/${APP_ENV:-app}_mkdocs:latest
-    pull_policy: always
     container_name: ${APP_ENV:-app}_mkdocs
     hostname: ${APP_ENV:-app}_mkdocs
     restart: unless-stopped
     environment:
       SITE_URL: "https://features.ai-center.online/docs/"
+    healthcheck:
+      test: ["CMD-SHELL", "python -c 'import urllib.request as u; u.urlopen(\"http://localhost:8000/\")' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
     stdin_open: true
     tty: true
     networks:

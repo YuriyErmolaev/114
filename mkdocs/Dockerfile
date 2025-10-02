@@ -1,5 +1,10 @@
-FROM squidfunk/mkdocs-material:latest
+FROM python:3.11-alpine
 
-COPY mkdocs/. .
+RUN pip install --no-cache-dir mkdocs mkdocs-material
 
-RUN rm -f mkdocs.yml && mv mkdocs.public.yml mkdocs.yml
+WORKDIR /docs
+COPY ./mkdocs.yml ./mkdocs.yml
+COPY ./docs ./docs
+
+EXPOSE 8000
+CMD ["mkdocs", "serve", "-a", "0.0.0.0:8000"]

@@ -1,0 +1,22 @@
+# Local-only override: do not change base compose used for prod/CI
+# Frontends are optional via the `frontend` profile; core services always run.
+
+services:
+  webapp:
+    profiles: ["frontend"]
+
+  siteapp:
+    profiles: ["frontend"]
+
+  apiapp:
+    build:
+      context: ./apiapp
+      dockerfile: Dockerfile
+
+  keycloak:
+    build:
+      context: ./keycloak
+
+  mkdocs:
+    build:
+      context: ./mkdocs

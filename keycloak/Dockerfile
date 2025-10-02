@@ -1,15 +1,11 @@
-FROM quay.io/keycloak/keycloak:25.0.1
+# Minimal Keycloak image based on official
+FROM quay.io/keycloak/keycloak:24.0.4
 
+# Install curl for healthcheck
 USER root
-COPY keycloak/entrypoint.sh /opt/keycloak/entrypoint.sh
-RUN chmod +x /opt/keycloak/entrypoint.sh
-USER keycloak
+RUN microdnf install -y curl && microdnf clean all || true
+USER 1000
 
-ENV KC_HEALTH_ENABLED=true
-ENV KC_METRICS_ENABLED=true
-ENV KC_HTTP_CORS=true
-ENV KC_HTTP_CORS_ORIGINS=*
-
-COPY keycloak/config/realm.json /opt/keycloak/data/import/realm.json
-
-ENTRYPOINT ["/opt/keycloak/entrypoint.sh"]
+# By default we will run in dev mode; can be overridden by compose
+ENTRYPOINT ["/opt/keycloak/bin/kc.sh"]
+CMD ["start-dev"]

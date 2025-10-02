@@ -3,9 +3,8 @@ services:
   # Keycloak with the default non-master realm config
   keycloak:
     image: ${DOCKER_REGISTRY}/${APP_ENV:-app}_keycloak:latest
-    pull_policy: always
     container_name: ${APP_ENV:-app}_keycloak
-    hostname: ${APP_ENV:-app}_keycloack
+    hostname: ${APP_ENV:-app}_keycloak
     restart: unless-stopped
     # Just for debug
     #ports:
@@ -13,8 +12,9 @@ services:
     environment:
       KEYCLOAK_ADMIN: ${APP_ROOT_USER:-admin}
       KEYCLOAK_ADMIN_PASSWORD: ${APP_ROOT_PASSWORD:-admin}
+    command: ["start-dev"]
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://keycloak:8080/health"]
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/health/ready >/dev/null || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 30

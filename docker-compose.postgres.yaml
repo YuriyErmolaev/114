@@ -15,7 +15,7 @@ services:
       #TODO: init scripts, но потом их копировать в образ при билде; после отладки rw->ro
       - ${POSTGRES_DATA_ROOT:-/mnt/share}/postgresql/data:/var/lib/postgresql/data:z,rw
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U "]
+      test: ["CMD-SHELL", "pg_isready -U \"$POSTGRES_USER\" -d \"$POSTGRES_DB\" -h localhost"]
       interval: 5s
       timeout: 5s
       retries: 5

@@ -3,7 +3,6 @@ services:
   # Fastapi backend
   apiapp:
     image: ${DOCKER_REGISTRY}/${APP_ENV:-app}_apiapp:latest
-    pull_policy: always
     container_name: ${APP_ENV:-app}_apiapp
     hostname: ${APP_ENV:-app}_apiapp
     restart: unless-stopped
@@ -18,5 +17,11 @@ services:
       ENABLED_PATHS_CONF: ${APP_ENABLED_PATHS:-/app/config/paths.json}
       ENABLED_ROUTES_CONF: ${APP_ENABLED_ROUTES:-/app/config/routes.json}
     command: [ "/usr/local/bin/server-start.sh" ]
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c 'import urllib.request as u; u.urlopen(\"http://localhost:8000/health\")' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
     networks:
       - ${APP_ENV:-app}-net
