@@ -154,6 +154,8 @@ async def run_analysis(
             face_threshold=face_threshold,
         )
     except Exception as e:
+        import traceback
+        print("[analyze] Prediction failed:\n", traceback.format_exc())
         raise HTTPException(status_code=500, detail=f"Prediction failed: {e}")
 
     # Optionally render schematic face GIF and emotions plot

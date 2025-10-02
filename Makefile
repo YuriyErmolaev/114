@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 
-.PHONY: env build up ps logs down clean rebuild pull
+.PHONY: env build up ps logs down clean rebuild pull apiapp-up apiapp-stop apiapp-restart apiapp-logs
 
 # Local usage combines base and local override; set COMPOSE_PROFILES=frontend to include webapp/siteapp
 # Example: COMPOSE_PROFILES=frontend make up
@@ -59,3 +59,24 @@ rebuild:
 
 pull:
 	docker compose -f docker-compose.yaml -f docker-compose.local.yaml pull
+
+
+apiapp-up:
+	docker compose -f docker-compose.yaml -f docker-compose.local.yaml up apiapp
+
+# Run only apiapp in foreground with build (show live logs)
+apiapp-upb:
+	docker compose -f docker-compose.yaml -f docker-compose.local.yaml up --build apiapp
+
+# Stop only apiapp (does not remove container)
+apiapp-stop:
+	docker compose -f docker-compose.yaml -f docker-compose.local.yaml stop apiapp
+
+# Restart only apiapp: stop, then run in foreground with live logs
+apiapp-restart:
+	$(MAKE) apiapp-stop
+	$(MAKE) apiapp-up
+
+# Follow logs of only apiapp
+apiapp-logs:
+	docker compose -f docker-compose.yaml -f docker-compose.local.yaml logs -f --tail=200 apiapp
