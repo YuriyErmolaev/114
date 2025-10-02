@@ -435,7 +435,15 @@ export class HomeDeepComponent implements OnInit, OnDestroy {
             this.deepAnalysisStatus = `Кадры: ${st.frames_done} / ${st.frames_total}`;
           }
 
-          if (status === 'done') {
+          if (status === 'error' || status === 'canceled') {
+            // Stop polling on error/cancel and show message
+            this.deepIndeterminate = false;
+            this.deepAnalysisRunning = false;
+            this.deepAnalysisStatus = status === 'canceled' ? 'Анализ прерван' : (st?.error ? `Ошибка анализа: ${st.error}` : 'Ошибка анализа');
+            try { window.clearInterval(this.pendingTimer); } catch {}
+            try { window.clearInterval(this.deepPollTimer); } catch {}
+            return;
+          } else if (status === 'done') {
             const resp = st?.result || {};
             const toAbs = (p?: string | null) => (p ? `${this.apiBase}${p}` : null);
             this.csvUrl = toAbs(resp?.csv?.url);
