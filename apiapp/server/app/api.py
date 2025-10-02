@@ -54,3 +54,17 @@ app.include_router(core_router, prefix="/core", tags=["Core"])
 from app.routes.analyze import router as analyze_router
 app.include_router(analyze_router, prefix="/analyze", tags=["Analyze"])
 
+
+
+# Debug: list registered routes on startup
+try:
+    print("[api] Registered routes:")
+    for r in app.router.routes:
+        try:
+            methods = ",".join(sorted(getattr(r, "methods", [])))
+            path = getattr(r, "path", str(getattr(r, "path_regex", "")))
+            print(f"[api] {methods or ''} {path}")
+        except Exception:
+            pass
+except Exception:
+    pass

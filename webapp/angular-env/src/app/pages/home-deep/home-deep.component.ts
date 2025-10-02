@@ -368,17 +368,62 @@ export class HomeDeepComponent implements OnInit, OnDestroy {
     };
 
     try {
-      // Start async task
-      const start: any = await lastValueFrom(this.http.post(`${this.apiBase}/analyze/run_async`, body));
-      const taskId = start?.task_id as string;
-      if (!taskId) { throw new Error('Не удалось запустить анализ'); }
+      // Try async route with fallbacks (/analyze vs /api/v1/analyze), then fallback to sync /run
+      const bases = ['', '/api/v1'];
+      let usedPrefix: string | null = null;
+      let taskId: string | null = null;
+
+      for (const prefix of bases) {
+        try {
+          const start: any = await lastValueFrom(this.http.post(`${this.apiBase}${prefix}/analyze/run_async`, body));
+          taskId = start?.task_id || null;
+          if (taskId) { usedPrefix = prefix; break; }
+        } catch (err) {
+          // try next prefix
+        }
+      }
+
+      if (!taskId) {
+        // Fallback: synchronous analysis
+        for (const prefix of bases) {
+          try {
+            const resp: any = await lastValueFrom(this.http.post(`${this.apiBase}${prefix}/analyze/run`, body));
+            const toAbs = (p?: string | null) => (p ? `${this.apiBase}${p}` : null);
+            this.csvUrl = toAbs(resp?.csv?.url);
+            this.avatarGifUrl = toAbs(resp?.avatar?.url);
+            this.emotionsImgUrl = toAbs(resp?.emotions_plot?.url);
+            const landmarks = resp?.data?.landmarks || {};
+            this.landmarksCols = { x: landmarks.x_cols || [], y: landmarks.y_cols || [] };
+            this.firstFrameLandmarks = landmarks.first_frame || { x: [], y: [] };
+            const afr = resp?.avatar_frames || {};
+            const files = Array.isArray(afr.files) ? afr.files : [];
+            const fps = Number(afr.fps || 10);
+            const toAbsFile = (f: any) => (typeof f?.url === 'string' ? `${this.apiBase}${f.url}` : null);
+            this.avatarFrames = files.map(toAbsFile).filter((u: string | null): u is string => !!u);
+            this.avatarFps = fps > 0 && fps <= 60 ? fps : 10;
+            this.avatarIndex = 0;
+            this.stopAvatar();
+            this.deepIndeterminate = false;
+            this.deepAnalysisProgress = 100;
+            this.deepAnalysisStatus = 'Анализ завершён';
+            this.deepAnalysisRunning = false;
+            try { window.clearInterval(this.pendingTimer); } catch {}
+            return; // done via sync route
+          } catch (err) {
+            // try next prefix
+          }
+        }
+        throw new Error('Не удалось запустить анализ (/run_async и /run недоступны)');
+      }
+
       this.deepTaskId = taskId;
+      const basePrefix = `${this.apiBase}${usedPrefix || ''}`;
 
       // Poll status
       try { window.clearInterval(this.deepPollTimer); } catch {}
       this.deepPollTimer = setInterval(async () => {
         try {
-          const st: any = await lastValueFrom(this.http.get(`${this.apiBase}/analyze/status/${taskId}`));
+          const st: any = await lastValueFrom(this.http.get(`${basePrefix}/analyze/status/${taskId}`));
           const status = st?.status as string;
           const p = Number(st?.progress ?? 0);
           if (Number.isFinite(p)) {
