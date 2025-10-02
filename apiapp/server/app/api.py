@@ -53,6 +53,8 @@ app.include_router(core_router, prefix="/core", tags=["Core"])
 # Analysis endpoints
 from app.routes.analyze import router as analyze_router
 app.include_router(analyze_router, prefix="/analyze", tags=["Analyze"])
+# Compatibility mount to handle direct calls with '/api/v1' in path when root_path is not set by proxy
+app.include_router(analyze_router, prefix="/api/v1/analyze", tags=["Analyze-Compat"])
 
 
 

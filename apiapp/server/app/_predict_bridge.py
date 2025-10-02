@@ -95,4 +95,5 @@ def render_avatar_frames(
         fps=fps,
         dpi=dpi,
         limit=limit,
+        progress_cb=progress_cb,
     )
