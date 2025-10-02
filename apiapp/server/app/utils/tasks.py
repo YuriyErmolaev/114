@@ -21,6 +21,11 @@ class TaskState:
     finished_at: Optional[float] = None
     frames_done: int = 0
     frames_total: Optional[int] = None
+    # Streaming fields for incremental UI updates
+    frames: list[str] = field(default_factory=list)
+    frames_base_url: Optional[str] = None
+    frames_fps: Optional[int] = None
+    emo_url: Optional[str] = None
 
 
 class TaskManager:

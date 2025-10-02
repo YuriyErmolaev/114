@@ -118,6 +118,9 @@ def _analysis_worker_impl(payload: Dict[str, Any], task_id: Optional[str] = None
     render_avatar = bool(payload.get("render_avatar") if payload.get("render_avatar") is not None else True)
     avatar_source = str(payload.get("avatar_source") or "hmm")
 
+    # For building URLs early (for streaming updates)
+    base_prefix = "/api/v1/core/download"
+
     if not session_id or not filename:
         raise HTTPException(status_code=400, detail="session_id and filename are required")
 
@@ -160,7 +163,9 @@ def _analysis_worker_impl(payload: Dict[str, Any], task_id: Optional[str] = None
         emo_png_path = downloads_dir / f"{base_stem}_emotions.png"
         _predict_bridge.render_emotions(csv_path=out_csv, out_png=emo_png_path, cols=None, dpi=160)
         if task_id:
-            task_manager.update(task_id, progress=55.0)
+            # expose emotions plot early via status
+            emo_url_early = f"{base_prefix}/downloads/{session_id}/{emo_png_path.name}/"
+            task_manager.update(task_id, progress=55.0, emo_url=emo_url_early)
     except Exception as e:
         tlog(f"Emotions plot failed: {e}")
         emo_png_path = None
@@ -170,10 +175,29 @@ def _analysis_worker_impl(payload: Dict[str, Any], task_id: Optional[str] = None
     avatar_frames: list[Path] = []
     frames_fps: Optional[int] = None
     if render_avatar:
+        # Prepare streaming base URL and fps for UI
+        if task_id:
+            try:
+                task_manager.update(task_id, frames_base_url=f"{base_prefix}/downloads/{session_id}/", frames_fps=max(1, min(25, fps)))
+            except Exception:
+                pass
         def _pcb(done: int, total: int) -> None:
             if task_id and total > 0:
                 # map frames progress to 60..98
                 pr = 60.0 + (max(0, min(done, total)) / total) * 38.0
+                # Push incremental frame name for UI to pick up
+                try:
+                    st = task_manager.get(task_id)
+                    if st is not None:
+                        from pathlib import Path as _P
+                        # We know file pattern: prefix + _aframe_{index:04d}.png; index = done-1
+                        name = f"{out_prefix.name}_aframe_{done-1:04d}.png"
+                        if st.frames_base_url is None:
+                            task_manager.update(task_id, frames_base_url=f"{base_prefix}/downloads/{session_id}/")
+                        if name not in st.frames:
+                            task_manager.update(task_id, frames=st.frames + [name])
+                except Exception:
+                    pass
                 task_manager.update(task_id, frames_done=done, frames_total=total, progress=pr, message=f"Кадры: {done}/{total}")
         try:
             tlog("Avatar frames rendering")
@@ -318,6 +342,12 @@ async def analysis_status(task_id: str) -> Dict[str, Any]:
         "message": st.message,
         "frames_done": st.frames_done,
         "frames_total": st.frames_total,
+        # Streaming fields
+        "emo_url": st.emo_url,
+        "frames_base_url": st.frames_base_url,
+        "frames_fps": st.frames_fps,
+        "frames": st.frames,
+        # Errors/logs/final result
         "error": st.error,
         "logs": st.logs,
         "result": st.result if st.status == "done" else None,

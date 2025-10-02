@@ -152,6 +152,8 @@ export class HomeDeepComponent implements OnInit, OnDestroy {
   avatarIndex = 0;
   avatarPlaying = false;
   private avatarTimer: any = null;
+  // Track frame names to avoid duplicates during streaming
+  private avatarFrameNames: Set<string> = new Set<string>();
 
   async ngOnInit(): Promise<void> {
     // prepare session for backend operations
@@ -343,6 +345,13 @@ export class HomeDeepComponent implements OnInit, OnDestroy {
     this.deepAnalysisProgress = 1;
     this.deepAnalysisStatus = 'Запуск анализа...';
 
+    // reset previous results for streaming session
+    this.emotionsImgUrl = null;
+    this.avatarFrames = [];
+    this.avatarFrameNames.clear();
+    this.avatarIndex = 0;
+    this.stopAvatar();
+
     // enable pending animation
     this.deepIndeterminate = true;
     try { window.clearInterval(this.pendingTimer); } catch {}
@@ -435,6 +444,26 @@ export class HomeDeepComponent implements OnInit, OnDestroy {
             this.deepAnalysisStatus = `Кадры: ${st.frames_done} / ${st.frames_total}`;
           }
 
+          // Show early emotions plot if available
+          const earlyEmo = typeof st?.emo_url === 'string' ? st.emo_url : null;
+          if (!this.emotionsImgUrl && earlyEmo) {
+            this.emotionsImgUrl = `${this.apiBase}${earlyEmo}`;
+          }
+          // Append streaming frames if provided
+          const base = typeof st?.frames_base_url === 'string' ? st.frames_base_url : null;
+          const sFrames: string[] = Array.isArray(st?.frames) ? st.frames : [];
+          if (base && sFrames.length) {
+            for (const name of sFrames) {
+              if (!this.avatarFrameNames.has(name)) {
+                this.avatarFrameNames.add(name);
+                this.avatarFrames.push(`${this.apiBase}${base}${name}/`);
+              }
+            }
+            if (typeof st?.frames_fps === 'number' && st.frames_fps > 0 && st.frames_fps <= 60) {
+              this.avatarFps = st.frames_fps;
+            }
+          }
+
           if (status === 'error' || status === 'canceled') {
             // Stop polling on error/cancel and show message
             this.deepIndeterminate = false;
@@ -448,18 +477,27 @@ export class HomeDeepComponent implements OnInit, OnDestroy {
             const toAbs = (p?: string | null) => (p ? `${this.apiBase}${p}` : null);
             this.csvUrl = toAbs(resp?.csv?.url);
             this.avatarGifUrl = toAbs(resp?.avatar?.url);
-            this.emotionsImgUrl = toAbs(resp?.emotions_plot?.url);
+            // If final emotions plot exists, prefer it
+            const finalEmo = toAbs(resp?.emotions_plot?.url);
+            if (finalEmo) this.emotionsImgUrl = finalEmo;
             const landmarks = resp?.data?.landmarks || {};
             this.landmarksCols = { x: landmarks.x_cols || [], y: landmarks.y_cols || [] };
             this.firstFrameLandmarks = landmarks.first_frame || { x: [], y: [] };
 
-            // Avatar frames
+            // Avatar frames (final list to ensure completeness)
             const afr = resp?.avatar_frames || {};
             const files = Array.isArray(afr.files) ? afr.files : [];
             const fps = Number(afr.fps || 10);
             const toAbsFile = (f: any) => (typeof f?.url === 'string' ? `${this.apiBase}${f.url}` : null);
-            this.avatarFrames = files.map(toAbsFile).filter((u: string | null): u is string => !!u);
-            this.avatarFps = fps > 0 && fps <= 60 ? fps : 10;
+            const finalUrls = files.map(toAbsFile).filter((u: string | null): u is string => !!u);
+            for (const url of finalUrls) {
+              const name = url.split('/').slice(-2, -1)[0]; // extract file name from url
+              if (!this.avatarFrameNames.has(name)) {
+                this.avatarFrameNames.add(name);
+                this.avatarFrames.push(url);
+              }
+            }
+            this.avatarFps = fps > 0 && fps <= 60 ? fps : this.avatarFps;
             this.avatarIndex = 0;
             this.stopAvatar();
 
