@@ -1,0 +1,10 @@
+# Runtime constraints to keep scientific stack compatible with Python 3.11 and py-feat/nltools
+# - numpy 2.x breaks many wheels compiled against 1.x; pin to <2
+# - scipy >=1.11 removed scipy.stats.binom_test (required by nltools/py-feat); pin to <1.11
+# - numexpr must be compatible with pinned NumPy
+# - pandas 2.x may cause incompatibilities with older deps; pin to <2 for safety
+
+numpy>=1.26,<2
+scipy<1.11
+numexpr<2.10
+pandas<2.0

@@ -61,6 +61,10 @@ fi
 if [ -e 'app/requirements.txt' ]; then
   CUR_HASH+=$(sha256sum app/requirements.txt | awk '{print $1}')
 fi
+# include constraints in hash to trigger install when pins change
+if [ -e 'app/constraints.txt' ]; then
+  CUR_HASH+=$(sha256sum app/constraints.txt | awk '{print $1}')
+fi
 NEED_INSTALL=1
 if [ -e "${REQ_HASH_FILE}" ]; then
   OLD_HASH=$(cat ${REQ_HASH_FILE})
@@ -69,11 +73,23 @@ if [ -e "${REQ_HASH_FILE}" ]; then
   fi
 fi
 if [ ${NEED_INSTALL} -eq 1 ]; then
+  # Prefer binary wheels and apply runtime constraints to avoid incompatible upgrades
+  export PIP_PREFER_BINARY=1 PIP_ONLY_BINARY=:all: PIP_NO_BUILD_ISOLATION=1
+  CONSTRAINTS="app/constraints.txt"
+  echo "[dev] Installing Python deps (with constraints: ${CONSTRAINTS})"
   if [ -e 'requirements.txt' ]; then
-    pip install -r requirements.txt
+    if [ -e "${CONSTRAINTS}" ]; then
+      pip install --upgrade --upgrade-strategy eager -r requirements.txt -c ${CONSTRAINTS}
+    else
+      pip install --upgrade --upgrade-strategy eager -r requirements.txt
+    fi
   fi
   if [ -e 'app/requirements.txt' ]; then
-    pip install -r app/requirements.txt
+    if [ -e "${CONSTRAINTS}" ]; then
+      pip install --upgrade --upgrade-strategy eager -r app/requirements.txt -c ${CONSTRAINTS}
+    else
+      pip install --upgrade --upgrade-strategy eager -r app/requirements.txt
+    fi
   fi
   echo -n "${CUR_HASH}" > ${REQ_HASH_FILE}
 else

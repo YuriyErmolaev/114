@@ -19,6 +19,7 @@ services:
       - ./apiapp/server:/server:rw
       - ./ai_data:/ai_data:rw
       - ./artifacts:/artifacts:rw
+      - ./apiapp/init-app/server-start.sh:/usr/local/bin/server-start.sh:ro
     ports:
       - "${APIAPP_HTTP_PORT:-18080}:8000"
 
