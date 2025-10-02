@@ -12,6 +12,8 @@ services:
     build:
       context: .
       dockerfile: apiapp/Dockerfile
+    ports:
+      - "${APIAPP_HTTP_PORT:-18080}:8000"
 
   keycloak:
     build:
