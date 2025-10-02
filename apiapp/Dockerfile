@@ -22,7 +22,7 @@ RUN set -x \
 # Preinstall compatible NumPy wheel to avoid source build on Python 3.11
 RUN . venv/bin/activate \
     && pip install --upgrade pip setuptools wheel \
-    && pip install "numpy>=1.26,<2" --only-binary=:all: \
+    && pip install "numpy>=1.26,<2" "scipy<1.11" --only-binary=:all: \
     && deactivate
 
 # Install remaining requirements with binary-only wheels and no build isolation
