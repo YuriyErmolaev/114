@@ -114,7 +114,7 @@ export class DeepAnalysisComponent implements OnInit {
       filename: this.uploadedFilename,
       artifacts: 'artifacts',
       fps: 12,
-      skip_frames: 25,
+      skip_frames: 1,
       face_threshold: 0.9,
       render_avatar: true,
       avatar_source: 'hmm'

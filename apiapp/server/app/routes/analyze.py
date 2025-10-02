@@ -180,7 +180,7 @@ async def run_analysis(
                 source=avatar_source,
                 fps=max(1, min(25, fps)),
                 dpi=150,
-                limit=300,
+                limit=None,
             )
         except Exception:
             avatar_frames = []
@@ -195,7 +195,7 @@ async def run_analysis(
                     source="real",
                     fps=max(1, min(25, fps)),
                     dpi=150,
-                    limit=300,
+                    limit=None,
                 )
             except Exception:
                 pass
