@@ -183,6 +183,20 @@ async def run_analysis(
         except Exception:
             avatar_frames = []
             frames_fps = None
+        # Fallback: if frames not produced (e.g., no HMM_AUexp_*), try source='real'
+        if not avatar_frames:
+            try:
+                out_prefix_real = downloads_dir / f"{base_stem}_avatar_real"
+                frames_fps, avatar_frames = _predict_bridge.render_avatar_frames(
+                    csv_path=out_csv,
+                    out_prefix=out_prefix_real,
+                    source="real",
+                    fps=max(1, min(25, fps)),
+                    dpi=150,
+                    limit=300,
+                )
+            except Exception:
+                pass
         # Legacy GIF (best-effort)
         try:
             gif_path = downloads_dir / f"{base_stem}_avatar_{avatar_source}.gif"
