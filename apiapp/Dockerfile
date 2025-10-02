@@ -1,8 +1,11 @@
 FROM python:3.11-slim
 
 WORKDIR /server
-
+ENV PYTHONPATH=/server
 COPY apiapp/server .
+COPY apiapp/server/predict_video_to_csv.py /server/predict_video_to_csv.py
+COPY apiapp/server/avatar_animation.py /server/avatar_animation.py
+COPY apiapp/server/emotions_plot.py /server/emotions_plot.py
 COPY apiapp/init-app/server-start.sh /usr/local/bin/server-start.sh
 
 ENV DATA_ROOT=

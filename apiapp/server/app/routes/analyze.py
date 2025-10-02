@@ -9,7 +9,7 @@ from fastapi import APIRouter, Body, HTTPException
 from app.configs.paths import DirectoryEnum, VALID_DIRECTORIES, ensure_session_dir
 
 # Reuse existing CLI-like utilities as library functions
-from .. import _predict_bridge  # type: ignore
+from app import _predict_bridge  # type: ignore
 
 router = APIRouter()
 

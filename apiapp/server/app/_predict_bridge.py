@@ -4,9 +4,9 @@ from pathlib import Path
 from typing import Optional
 
 # Import the existing scripts as modules
-from ..predict_video_to_csv import run as _predict_run
-from ..avatar_animation import main as _avatar_main
-from ..emotions_plot import main as _emotions_main
+from predict_video_to_csv import run as _predict_run
+from avatar_animation import main as _avatar_main
+from emotions_plot import main as _emotions_main
 
 
 def run_predict(
