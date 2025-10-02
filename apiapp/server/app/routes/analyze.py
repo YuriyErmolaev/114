@@ -164,14 +164,30 @@ async def run_analysis(
     except Exception:
         emo_png_path = None
 
-    # Optionally render schematic face GIF
+    # Optionally render schematic face GIF (legacy) and frames (new)
     gif_path: Optional[Path] = None
+    avatar_frames: list[Path] = []
+    frames_fps: Optional[int] = None
     if render_avatar:
+        # New: render frames (cap to first 300 to keep payload sane)
+        try:
+            out_prefix = downloads_dir / f"{base_stem}_avatar_{avatar_source}"
+            frames_fps, avatar_frames = _predict_bridge.render_avatar_frames(
+                csv_path=out_csv,
+                out_prefix=out_prefix,
+                source=avatar_source,
+                fps=max(1, min(25, fps)),
+                dpi=150,
+                limit=300,
+            )
+        except Exception:
+            avatar_frames = []
+            frames_fps = None
+        # Legacy GIF (best-effort)
         try:
             gif_path = downloads_dir / f"{base_stem}_avatar_{avatar_source}.gif"
             _predict_bridge.render_avatar(csv_path=out_csv, out_gif=gif_path, source=avatar_source, fps=max(1, min(25, fps)))
-        except Exception as e:
-            # Non-fatal
+        except Exception:
             gif_path = None
 
     # Parse CSV for frontend
@@ -193,6 +209,14 @@ async def run_analysis(
     gif_url = f"{base_prefix}/downloads/{session_id}/{gif_path.name}/" if gif_path and gif_path.exists() else None
     emo_url = f"{base_prefix}/downloads/{session_id}/{emo_png_path.name}/" if emo_png_path and emo_png_path.exists() else None
 
+    # Build frames URLs
+    frames_list: List[Dict[str, Any]] = []
+    if avatar_frames:
+        for p in avatar_frames:
+            name = Path(p).name
+            url = f"{base_prefix}/downloads/{session_id}/{name}/"
+            frames_list.append({"name": name, "url": url})
+
     return {
         "session_id": session_id,
         "video": filename,
@@ -208,6 +232,10 @@ async def run_analysis(
         "emotions_plot": {
             "path": str(emo_png_path) if emo_png_path else None,
             "url": emo_url,
+        },
+        "avatar_frames": {
+            "fps": int(frames_fps or fps) if (frames_fps or fps) else None,
+            "files": frames_list,
         },
         "data": parsed,
     }

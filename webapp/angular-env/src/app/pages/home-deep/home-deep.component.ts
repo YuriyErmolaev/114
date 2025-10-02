@@ -144,6 +144,13 @@ export class HomeDeepComponent implements OnInit, OnDestroy {
   landmarksCols: { x: string[]; y: string[] } = { x: [], y: [] };
   firstFrameLandmarks: { x: number[]; y: number[] } = { x: [], y: [] };
 
+  // Avatar frames player
+  avatarFrames: string[] = [];
+  avatarFps = 10;
+  avatarIndex = 0;
+  avatarPlaying = false;
+  private avatarTimer: any = null;
+
   async ngOnInit(): Promise<void> {
     // prepare session for backend operations
     this.session.syncSessionToCurrentUser();
@@ -369,6 +376,17 @@ export class HomeDeepComponent implements OnInit, OnDestroy {
       const landmarks = resp?.data?.landmarks || {};
       this.landmarksCols = { x: landmarks.x_cols || [], y: landmarks.y_cols || [] };
       this.firstFrameLandmarks = landmarks.first_frame || { x: [], y: [] };
+
+      // Avatar frames
+      const afr = resp?.avatar_frames || {};
+      const files = Array.isArray(afr.files) ? afr.files : [];
+      const fps = Number(afr.fps || 10);
+      const toAbsFile = (f: any) => (typeof f?.url === 'string' ? `${this.apiBase}${f.url}` : null);
+      this.avatarFrames = files.map(toAbsFile).filter((u: string | null): u is string => !!u);
+      this.avatarFps = fps > 0 && fps <= 60 ? fps : 10;
+      this.avatarIndex = 0;
+      this.stopAvatar();
+
       this.deepIndeterminate = false;
       this.deepAnalysisProgress = 100;
       this.deepAnalysisStatus = 'Анализ завершён';
@@ -390,10 +408,40 @@ export class HomeDeepComponent implements OnInit, OnDestroy {
     this.deepAnalysisStatus = 'Анализ прерван';
   }
 
+  // --- Avatar frames player controls ---
+  playAvatar(): void {
+    if (!this.avatarFrames?.length) return;
+    if (this.avatarPlaying) return;
+    this.avatarPlaying = true;
+    const interval = Math.max(20, Math.round(1000 / Math.max(1, this.avatarFps)));
+    try { window.clearInterval(this.avatarTimer); } catch {}
+    this.avatarTimer = setInterval(() => {
+      if (!this.avatarPlaying || !this.avatarFrames?.length) return;
+      this.avatarIndex = (this.avatarIndex + 1) % this.avatarFrames.length;
+    }, interval);
+  }
+
+  stopAvatar(): void {
+    this.avatarPlaying = false;
+    try { window.clearInterval(this.avatarTimer); } catch {}
+  }
+
+  toggleAvatar(): void {
+    if (this.avatarPlaying) this.stopAvatar(); else this.playAvatar();
+  }
+
+  onAvatarIndexChange(i: number): void {
+    const n = this.avatarFrames?.length || 0;
+    if (n === 0) return;
+    const clamped = Math.max(0, Math.min(n - 1, Math.round(i)));
+    this.avatarIndex = clamped;
+  }
+
   ngOnDestroy(): void {
     try { window.clearInterval(this.deepInterval); } catch {}
     try { window.clearTimeout(this.savingTimeout); } catch {}
     try { window.clearInterval(this.pendingTimer); } catch {}
+    try { window.clearInterval(this.avatarTimer); } catch {}
     this.stopCurrentStream();
   }
 

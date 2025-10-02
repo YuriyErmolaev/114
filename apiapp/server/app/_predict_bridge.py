@@ -7,6 +7,7 @@ from typing import Optional
 from predict_video_to_csv import run as _predict_run
 from avatar_animation import main as _avatar_main
 from emotions_plot import main as _emotions_main
+from app._avatar_frames import render_avatar_frames as _render_avatar_frames
 
 
 def run_predict(
@@ -70,3 +71,27 @@ def render_emotions(
     if rc == 0:
         return out_png
     return None
+
+
+def render_avatar_frames(
+    csv_path: Path,
+    out_prefix: Path,
+    source: str = "hmm",
+    fps: int = 10,
+    dpi: int = 150,
+    limit: Optional[int] = None,
+) -> tuple[int, list[Path]]:
+    """Render per-frame avatar PNGs using internal helper.
+
+    out_prefix is the common prefix for frame files; files will be named
+    f"{out_prefix}_aframe_0001.png", etc.
+    Returns (fps, [paths]).
+    """
+    return _render_avatar_frames(
+        csv_path=csv_path,
+        out_prefix=out_prefix,
+        source=source,
+        fps=fps,
+        dpi=dpi,
+        limit=limit,
+    )

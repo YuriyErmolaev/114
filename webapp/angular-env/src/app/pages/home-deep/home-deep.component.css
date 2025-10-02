@@ -8,6 +8,13 @@
 .cols { color: #666; }
 .error { color: #b00020; }
 
+/* Avatar frames player */
+.avatar-player { display: flex; flex-direction: column; gap: 8px; }
+.avatar-stage { width: 400px; max-width: 100%; border: 1px solid #ddd; border-radius: 6px; overflow: hidden; background: #fff; }
+.avatar-img { display: block; width: 100%; height: auto; }
+.avatar-controls { display: flex; align-items: center; gap: 8px; }
+.avatar-controls input[type=range] { flex: 1 1 auto; }
+
 .container { padding: 16px; }
 .uploader, .actions { margin: 12px 0; display: flex; align-items: center; gap: 8px; }
 .result-block { margin: 10px 0; }
