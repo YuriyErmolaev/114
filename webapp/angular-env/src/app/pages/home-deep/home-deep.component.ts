@@ -132,6 +132,8 @@ export class HomeDeepComponent implements OnInit, OnDestroy {
   deepAnalysisProgress = 0;
   deepAnalysisStatus = '';
   private deepInterval: any = null;
+  deepIndeterminate = false;
+  private pendingTimer: any = null;
 
   // Integration: backend upload + results
   uploadedFilename: string | null = null;
@@ -334,6 +336,19 @@ export class HomeDeepComponent implements OnInit, OnDestroy {
     this.deepAnalysisProgress = 1;
     this.deepAnalysisStatus = 'Запуск анализа...';
 
+    // enable pending animation
+    this.deepIndeterminate = true;
+    try { window.clearInterval(this.pendingTimer); } catch {}
+    let t = 0;
+    this.pendingTimer = setInterval(() => {
+      if (!this.deepIndeterminate) return;
+      t += 1;
+      const phase = (t % 80) / 80; // 0..1
+      const val = 10 + Math.abs(Math.sin(phase * Math.PI * 2)) * 80; // 10..90
+      this.deepAnalysisProgress = Math.round(val);
+      this.deepAnalysisStatus = 'Анализ выполняется...';
+    }, 200);
+
     const body = {
       session_id: this.sessionId,
       filename: this.uploadedFilename,
@@ -353,25 +368,31 @@ export class HomeDeepComponent implements OnInit, OnDestroy {
       const landmarks = resp?.data?.landmarks || {};
       this.landmarksCols = { x: landmarks.x_cols || [], y: landmarks.y_cols || [] };
       this.firstFrameLandmarks = landmarks.first_frame || { x: [], y: [] };
+      this.deepIndeterminate = false;
       this.deepAnalysisProgress = 100;
       this.deepAnalysisStatus = 'Анализ завершён';
     } catch (e: any) {
       this.error = e?.message || 'Анализ не выполнен';
+      this.deepIndeterminate = false;
       this.deepAnalysisStatus = 'Ошибка анализа';
     } finally {
       this.deepAnalysisRunning = false;
+      try { window.clearInterval(this.pendingTimer); } catch {}
     }
   }
 
   cancelDeepAnalysis(): void {
-    if (!this.deepAnalysisRunning) return;
+    if (!this.deepAnalysisRunning && !this.deepIndeterminate) return;
     this.deepAnalysisRunning = false;
+    this.deepIndeterminate = false;
+    try { window.clearInterval(this.pendingTimer); } catch {}
     this.deepAnalysisStatus = 'Анализ прерван';
   }
 
   ngOnDestroy(): void {
     try { window.clearInterval(this.deepInterval); } catch {}
     try { window.clearTimeout(this.savingTimeout); } catch {}
+    try { window.clearInterval(this.pendingTimer); } catch {}
     this.stopCurrentStream();
   }
 

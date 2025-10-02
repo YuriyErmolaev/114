@@ -7,3 +7,18 @@
 .landmarks { display: flex; gap: 24px; }
 .cols { color: #666; }
 .error { color: #b00020; }
+
+.container { padding: 16px; }
+.uploader, .actions { margin: 12px 0; display: flex; align-items: center; gap: 8px; }
+.result-block { margin: 10px 0; }
+.error { color: #b00020; }
+.plot-img { max-width: 100%; border: 1px solid #ddd; }
+.gif-img { max-width: 400px; border: 1px solid #ddd; }
+.landmarks { display: flex; gap: 24px; }
+.cols { color: #666; }
+
+/* Progress bar styles including indeterminate animation */
+.progress { position: relative; height: 8px; background: var(--app-surface-muted); border-radius: 4px; overflow: hidden; min-width: 160px; }
+.progress .bar { height: 100%; background: linear-gradient(90deg, #4c8bf5, #2e7d32); transition: width 180ms linear; }
+.progress.indeterminate .bar { position: absolute; width: 30%; left: -30%; animation: progress-indeterminate 1.2s ease-in-out infinite; }
+@keyframes progress-indeterminate { 0% { left: -30%; } 50% { left: 50%; } 100% { left: 100%; } }

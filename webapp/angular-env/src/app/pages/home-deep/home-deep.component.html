@@ -127,8 +127,8 @@
           <button class="btn ghost" [disabled]="!deepAnalysisRunning" (click)="cancelDeepAnalysis()">Прервать анализ</button>
         </div>
         <div class="controls-row" *ngIf="deepAnalysisRunning || deepAnalysisStatus">
-          <div class="progress" aria-label="Прогресс глубокого анализа">
-            <div class="bar" [style.width.%]="deepAnalysisProgress"></div>
+          <div class="progress" [class.indeterminate]="deepIndeterminate" aria-label="Прогресс глубокого анализа">
+            <div class="bar" [style.width.%]="deepIndeterminate ? 30 : deepAnalysisProgress"></div>
           </div>
           <span class="hint">{{ deepAnalysisStatus }}</span>
         </div>
