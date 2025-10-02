@@ -136,26 +136,32 @@
       </div>
     </div>
 
-    <div class="panel" *ngIf="(!!emotionsImgUrl) || (avatarFrames.length > 0)">
+    <div class="panel" *ngIf="(!!emotionsImgUrl) || (avatarFrames.length > 0) || (!!avatarGifUrl)">
       <h3>Результаты глубокого анализа</h3>
       <div class="panel-content single">
         <div class="result-block" *ngIf="emotionsImgUrl">
           <h4>Графики эмоций</h4>
           <img [src]="emotionsImgUrl" alt="Emotions" class="plot-img">
         </div>
+
         <div class="result-block" *ngIf="avatarFrames.length > 0">
           <h4>Схематический плеер (кадры)</h4>
+          <div class="hint">Кадров: {{ avatarFrames.length }} | FPS: {{ avatarFps }}</div>
           <div class="avatar-player">
             <div class="avatar-stage">
               <img [src]="avatarFrames[avatarIndex]" alt="Avatar frame" class="avatar-img">
             </div>
             <div class="avatar-controls">
               <button class="btn" (click)="toggleAvatar()">{{ avatarPlaying ? '⏸️ Пауза' : '▶️ Пуск' }}</button>
-              <span class="hint">FPS: {{ avatarFps }}</span>
               <input type="range" min="0" [max]="(avatarFrames.length-1)" [value]="avatarIndex" (input)="onAvatarIndexChange($any($event.target).value)">
               <span class="hint">{{ avatarIndex + 1 }} / {{ avatarFrames.length }}</span>
             </div>
           </div>
+        </div>
+
+        <div class="result-block" *ngIf="avatarFrames.length === 0 && avatarGifUrl">
+          <h4>Схематический плеер (GIF, резерв)</h4>
+          <img [src]="avatarGifUrl" alt="Avatar animation" class="gif-img">
         </div>
       </div>
     </div>
