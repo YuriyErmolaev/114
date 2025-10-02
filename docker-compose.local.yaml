@@ -10,8 +10,8 @@ services:
 
   apiapp:
     build:
-      context: ./apiapp
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: apiapp/Dockerfile
 
   keycloak:
     build:
