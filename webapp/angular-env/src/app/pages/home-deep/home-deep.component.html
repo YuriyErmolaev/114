@@ -136,14 +136,14 @@
       </div>
     </div>
 
-    <div class="panel" *ngIf="emotionsImgUrl || (avatarFrames?.length > 0)">
+    <div class="panel" *ngIf="(!!emotionsImgUrl) || (avatarFrames.length > 0)">
       <h3>Результаты глубокого анализа</h3>
       <div class="panel-content single">
         <div class="result-block" *ngIf="emotionsImgUrl">
           <h4>Графики эмоций</h4>
           <img [src]="emotionsImgUrl" alt="Emotions" class="plot-img">
         </div>
-        <div class="result-block" *ngIf="avatarFrames?.length">
+        <div class="result-block" *ngIf="avatarFrames.length > 0">
           <h4>Схематический плеер (кадры)</h4>
           <div class="avatar-player">
             <div class="avatar-stage">
