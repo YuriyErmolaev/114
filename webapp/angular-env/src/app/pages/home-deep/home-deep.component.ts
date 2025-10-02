@@ -362,9 +362,10 @@ export class HomeDeepComponent implements OnInit, OnDestroy {
 
     try {
       const resp: any = await lastValueFrom(this.http.post(`${this.apiBase}/analyze/run`, body));
-      this.csvUrl = resp?.csv?.url || null;
-      this.avatarGifUrl = resp?.avatar?.url || null;
-      this.emotionsImgUrl = resp?.emotions_plot?.url || null;
+      const toAbs = (p?: string | null) => (p ? `${this.apiBase}${p}` : null);
+      this.csvUrl = toAbs(resp?.csv?.url);
+      this.avatarGifUrl = toAbs(resp?.avatar?.url);
+      this.emotionsImgUrl = toAbs(resp?.emotions_plot?.url);
       const landmarks = resp?.data?.landmarks || {};
       this.landmarksCols = { x: landmarks.x_cols || [], y: landmarks.y_cols || [] };
       this.firstFrameLandmarks = landmarks.first_frame || { x: [], y: [] };

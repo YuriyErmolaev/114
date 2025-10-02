@@ -136,13 +136,9 @@
       </div>
     </div>
 
-    <div class="panel" *ngIf="csvUrl || emotionsImgUrl || avatarGifUrl">
+    <div class="panel" *ngIf="emotionsImgUrl || avatarGifUrl">
       <h3>Результаты глубокого анализа</h3>
       <div class="panel-content single">
-        <div class="result-block" *ngIf="csvUrl">
-          <h4>CSV</h4>
-          <a [href]="csvUrl" target="_blank" rel="noopener">Скачать CSV</a>
-        </div>
         <div class="result-block" *ngIf="emotionsImgUrl">
           <h4>Графики эмоций</h4>
           <img [src]="emotionsImgUrl" alt="Emotions" class="plot-img">
@@ -150,27 +146,6 @@
         <div class="result-block" *ngIf="avatarGifUrl">
           <h4>Схематический плеер</h4>
           <img [src]="avatarGifUrl" alt="Avatar" class="gif-img">
-        </div>
-        <div class="result-block" *ngIf="firstFrameLandmarks.x.length">
-          <h4>Ландмарки (первый кадр)</h4>
-          <div class="landmarks">
-            <div>
-              <h5>X</h5>
-              <ul>
-                <li *ngFor="let v of firstFrameLandmarks.x; let i = index">{{ i }}: {{ v | number:'1.0-2' }}</li>
-              </ul>
-            </div>
-            <div>
-              <h5>Y</h5>
-              <ul>
-                <li *ngFor="let v of firstFrameLandmarks.y; let i = index">{{ i }}: {{ v | number:'1.0-2' }}</li>
-              </ul>
-            </div>
-          </div>
-          <div class="cols">
-            <small>Колонки X: {{ landmarksCols.x.join(', ') }}</small><br>
-            <small>Колонки Y: {{ landmarksCols.y.join(', ') }}</small>
-          </div>
         </div>
       </div>
     </div>
