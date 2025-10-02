@@ -80,6 +80,7 @@ def render_avatar_frames(
     fps: int = 10,
     dpi: int = 150,
     limit: Optional[int] = None,
+    progress_cb=None,
 ) -> tuple[int, list[Path]]:
     """Render per-frame avatar PNGs using internal helper.
 

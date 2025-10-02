@@ -11,6 +11,8 @@ from app.configs.paths import DirectoryEnum, VALID_DIRECTORIES, ensure_session_d
 # Reuse existing CLI-like utilities as library functions
 from app import _predict_bridge  # type: ignore
 
+from app.utils.tasks import manager as task_manager
+
 router = APIRouter()
 
 
@@ -97,29 +99,16 @@ def _parse_csv_for_front(csv_path: Path) -> Dict[str, Any]:
     return result
 
 
-@router.post("/run")
-async def run_analysis(
-    payload: Dict[str, Any] = Body(..., example={
-        "session_id": "uuid-here",
-        "filename": "video.mp4",
-        "artifacts": "artifacts",
-        "fps": 25,
-        "skip_frames": 25,
-        "face_threshold": 0.95,
-        "render_avatar": True,
-        "avatar_source": "hmm"
-    })
-) -> Dict[str, Any]:
+def _analysis_worker_impl(payload: Dict[str, Any], task_id: Optional[str] = None) -> Dict[str, Any]:
+    """Heavy synchronous analysis, factored for reuse by sync and async endpoints.
+    Updates TaskManager if task_id is provided.
     """
-    Run deep analysis for an uploaded video within a session.
+    def tlog(msg: str) -> None:
+        if task_id:
+            task_manager.log(task_id, msg)
+            task_manager.update(task_id, message=msg)
+        print(f"[analyze] {msg}")
 
-    Expected workflow on frontend:
-      1) Create session via /core/ (POST) to obtain session_id
-      2) Upload a video to /core/upload/uploads/{session_id}/ with field name 'file'
-      3) Call POST /analyze/run with session_id and uploaded filename
-
-    Returns JSON with parsed data and URLs to download artifacts (CSV, GIF).
-    """
     session_id = payload.get("session_id")
     filename = payload.get("filename")
     artifacts = payload.get("artifacts") or "artifacts"
@@ -145,6 +134,7 @@ async def run_analysis(
 
     # Run prediction to CSV (sync)
     try:
+        tlog("Prediction started")
         _predict_bridge.run_predict(
             video_path=in_video,
             output_csv=out_csv,
@@ -153,26 +143,40 @@ async def run_analysis(
             skip_frames=skip_frames,
             face_threshold=face_threshold,
         )
+        if task_id:
+            task_manager.update(task_id, progress=40.0)
+        tlog("Prediction finished")
     except Exception as e:
         import traceback
         print("[analyze] Prediction failed:\n", traceback.format_exc())
-        raise HTTPException(status_code=500, detail=f"Prediction failed: {e}")
+        if task_id:
+            task_manager.update(task_id, status="error", error=str(e))
+        raise
 
-    # Optionally render schematic face GIF and emotions plot
+    # Emotions plot
     emo_png_path: Optional[Path] = None
     try:
+        tlog("Emotions plot rendering")
         emo_png_path = downloads_dir / f"{base_stem}_emotions.png"
         _predict_bridge.render_emotions(csv_path=out_csv, out_png=emo_png_path, cols=None, dpi=160)
-    except Exception:
+        if task_id:
+            task_manager.update(task_id, progress=55.0)
+    except Exception as e:
+        tlog(f"Emotions plot failed: {e}")
         emo_png_path = None
 
-    # Optionally render schematic face GIF (legacy) and frames (new)
+    # Avatar frames and GIF
     gif_path: Optional[Path] = None
     avatar_frames: list[Path] = []
     frames_fps: Optional[int] = None
     if render_avatar:
-        # New: render frames (cap to first 300 to keep payload sane)
+        def _pcb(done: int, total: int) -> None:
+            if task_id and total > 0:
+                # map frames progress to 60..98
+                pr = 60.0 + (max(0, min(done, total)) / total) * 38.0
+                task_manager.update(task_id, frames_done=done, frames_total=total, progress=pr, message=f"Кадры: {done}/{total}")
         try:
+            tlog("Avatar frames rendering")
             out_prefix = downloads_dir / f"{base_stem}_avatar_{avatar_source}"
             frames_fps, avatar_frames = _predict_bridge.render_avatar_frames(
                 csv_path=out_csv,
@@ -181,13 +185,15 @@ async def run_analysis(
                 fps=max(1, min(25, fps)),
                 dpi=150,
                 limit=None,
+                progress_cb=_pcb,
             )
-        except Exception:
+        except Exception as e:
+            tlog(f"Avatar frames failed: {e}")
             avatar_frames = []
             frames_fps = None
-        # Fallback: if frames not produced (e.g., no HMM_AUexp_*), try source='real'
         if not avatar_frames:
             try:
+                tlog("Avatar frames fallback: source=real")
                 out_prefix_real = downloads_dir / f"{base_stem}_avatar_real"
                 frames_fps, avatar_frames = _predict_bridge.render_avatar_frames(
                     csv_path=out_csv,
@@ -196,10 +202,11 @@ async def run_analysis(
                     fps=max(1, min(25, fps)),
                     dpi=150,
                     limit=None,
+                    progress_cb=_pcb,
                 )
-            except Exception:
-                pass
-        # Legacy GIF (best-effort)
+            except Exception as e:
+                tlog(f"Avatar frames fallback failed: {e}")
+        # Legacy GIF best-effort (non-blocking for progress)
         try:
             gif_path = downloads_dir / f"{base_stem}_avatar_{avatar_source}.gif"
             _predict_bridge.render_avatar(csv_path=out_csv, out_gif=gif_path, source=avatar_source, fps=max(1, min(25, fps)))
@@ -233,6 +240,10 @@ async def run_analysis(
             url = f"{base_prefix}/downloads/{session_id}/{name}/"
             frames_list.append({"name": name, "url": url})
 
+    if task_id:
+        task_manager.update(task_id, progress=100.0)
+        tlog("Analysis finished")
+
     return {
         "session_id": session_id,
         "video": filename,
@@ -254,4 +265,60 @@ async def run_analysis(
             "files": frames_list,
         },
         "data": parsed,
+    }
+
+
+@router.post("/run")
+async def run_analysis(
+    payload: Dict[str, Any] = Body(..., example={
+        "session_id": "uuid-here",
+        "filename": "video.mp4",
+        "artifacts": "artifacts",
+        "fps": 25,
+        "skip_frames": 25,
+        "face_threshold": 0.95,
+        "render_avatar": True,
+        "avatar_source": "hmm"
+    })
+) -> Dict[str, Any]:
+    """
+    Run deep analysis for an uploaded video within a session.
+
+    Expected workflow on frontend:
+      1) Create session via /core/ (POST) to obtain session_id
+      2) Upload a video to /core/upload/uploads/{session_id}/ with field name 'file'
+      3) Call POST /analyze/run with session_id and uploaded filename
+
+    Returns JSON with parsed data and URLs to download artifacts (CSV, GIF).
+    """
+    # Keep the synchronous route for compatibility; run worker inline
+    return _analysis_worker_impl(payload, None)
+
+
+@router.post("/run_async")
+async def run_analysis_async(
+    payload: Dict[str, Any] = Body(...),
+) -> Dict[str, Any]:
+    """Start analysis in background and return task_id immediately."""
+    st = task_manager.create()
+    task_manager.log(st.id, "Task created")
+    task_manager.run(st.id, _analysis_worker_impl, payload, st.id)
+    return {"task_id": st.id}
+
+
+@router.get("/status/{task_id}")
+async def analysis_status(task_id: str) -> Dict[str, Any]:
+    st = task_manager.get(task_id)
+    if not st:
+        raise HTTPException(status_code=404, detail="Task not found")
+    return {
+        "id": st.id,
+        "status": st.status,
+        "progress": st.progress,
+        "message": st.message,
+        "frames_done": st.frames_done,
+        "frames_total": st.frames_total,
+        "error": st.error,
+        "logs": st.logs,
+        "result": st.result if st.status == "done" else None,
     }

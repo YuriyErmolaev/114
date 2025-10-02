@@ -134,6 +134,8 @@ export class HomeDeepComponent implements OnInit, OnDestroy {
   private deepInterval: any = null;
   deepIndeterminate = false;
   private pendingTimer: any = null;
+  private deepPollTimer: any = null;
+  private deepTaskId: string | null = null;
 
   // Integration: backend upload + results
   uploadedFilename: string | null = null;
@@ -329,8 +331,6 @@ export class HomeDeepComponent implements OnInit, OnDestroy {
   async startDeepAnalysis(): Promise<void> {
     if (this.deepAnalysisRunning) return;
     if (!this.uploadedFilename && this.loadedDeviceFileName) {
-      // try to upload selected device file name before running
-      // Note: we cannot access the File again here; analysis requires uploadedFilename
       this.deepAnalysisStatus = 'Файл не загружен. Выберите видео из "Файл с устройства" ещё раз.';
       return;
     }
@@ -368,33 +368,71 @@ export class HomeDeepComponent implements OnInit, OnDestroy {
     };
 
     try {
-      const resp: any = await lastValueFrom(this.http.post(`${this.apiBase}/analyze/run`, body));
-      const toAbs = (p?: string | null) => (p ? `${this.apiBase}${p}` : null);
-      this.csvUrl = toAbs(resp?.csv?.url);
-      this.avatarGifUrl = toAbs(resp?.avatar?.url);
-      this.emotionsImgUrl = toAbs(resp?.emotions_plot?.url);
-      const landmarks = resp?.data?.landmarks || {};
-      this.landmarksCols = { x: landmarks.x_cols || [], y: landmarks.y_cols || [] };
-      this.firstFrameLandmarks = landmarks.first_frame || { x: [], y: [] };
+      // Start async task
+      const start: any = await lastValueFrom(this.http.post(`${this.apiBase}/analyze/run_async`, body));
+      const taskId = start?.task_id as string;
+      if (!taskId) { throw new Error('Не удалось запустить анализ'); }
+      this.deepTaskId = taskId;
 
-      // Avatar frames
-      const afr = resp?.avatar_frames || {};
-      const files = Array.isArray(afr.files) ? afr.files : [];
-      const fps = Number(afr.fps || 10);
-      const toAbsFile = (f: any) => (typeof f?.url === 'string' ? `${this.apiBase}${f.url}` : null);
-      this.avatarFrames = files.map(toAbsFile).filter((u: string | null): u is string => !!u);
-      this.avatarFps = fps > 0 && fps <= 60 ? fps : 10;
-      this.avatarIndex = 0;
-      this.stopAvatar();
+      // Poll status
+      try { window.clearInterval(this.deepPollTimer); } catch {}
+      this.deepPollTimer = setInterval(async () => {
+        try {
+          const st: any = await lastValueFrom(this.http.get(`${this.apiBase}/analyze/status/${taskId}`));
+          const status = st?.status as string;
+          const p = Number(st?.progress ?? 0);
+          if (Number.isFinite(p)) {
+            this.deepAnalysisProgress = Math.max(1, Math.min(100, Math.round(p)));
+          }
+          if (st?.message) this.deepAnalysisStatus = st.message;
+          if (typeof st?.frames_done === 'number' && typeof st?.frames_total === 'number' && st.frames_total > 0) {
+            // Show partial progress numerically
+            this.deepAnalysisStatus = `Кадры: ${st.frames_done} / ${st.frames_total}`;
+          }
 
-      this.deepIndeterminate = false;
-      this.deepAnalysisProgress = 100;
-      this.deepAnalysisStatus = 'Анализ завершён';
+          if (status === 'done') {
+            const resp = st?.result || {};
+            const toAbs = (p?: string | null) => (p ? `${this.apiBase}${p}` : null);
+            this.csvUrl = toAbs(resp?.csv?.url);
+            this.avatarGifUrl = toAbs(resp?.avatar?.url);
+            this.emotionsImgUrl = toAbs(resp?.emotions_plot?.url);
+            const landmarks = resp?.data?.landmarks || {};
+            this.landmarksCols = { x: landmarks.x_cols || [], y: landmarks.y_cols || [] };
+            this.firstFrameLandmarks = landmarks.first_frame || { x: [], y: [] };
+
+            // Avatar frames
+            const afr = resp?.avatar_frames || {};
+            const files = Array.isArray(afr.files) ? afr.files : [];
+            const fps = Number(afr.fps || 10);
+            const toAbsFile = (f: any) => (typeof f?.url === 'string' ? `${this.apiBase}${f.url}` : null);
+            this.avatarFrames = files.map(toAbsFile).filter((u: string | null): u is string => !!u);
+            this.avatarFps = fps > 0 && fps <= 60 ? fps : 10;
+            this.avatarIndex = 0;
+            this.stopAvatar();
+
+            this.deepIndeterminate = false;
+            this.deepAnalysisProgress = 100;
+            this.deepAnalysisStatus = 'Анализ завершён';
+            this.deepAnalysisRunning = false;
+            try { window.clearInterval(this.pendingTimer); } catch {}
+            try { window.clearInterval(this.deepPollTimer); } catch {}
+          } else if (status === 'error') {
+            this.error = st?.error || 'Анализ не выполнен';
+            this.deepIndeterminate = false;
+            this.deepAnalysisStatus = 'Ошибка анализа';
+            this.deepAnalysisRunning = false;
+            try { window.clearInterval(this.pendingTimer); } catch {}
+            try { window.clearInterval(this.deepPollTimer); } catch {}
+          }
+        } catch (e) {
+          // Stop polling on fetch error
+          try { window.clearInterval(this.deepPollTimer); } catch {}
+        }
+      }, 1000);
     } catch (e: any) {
       this.error = e?.message || 'Анализ не выполнен';
       this.deepIndeterminate = false;
       this.deepAnalysisStatus = 'Ошибка анализа';
-    } finally {
       this.deepAnalysisRunning = false;
       try { window.clearInterval(this.pendingTimer); } catch {}
     }
@@ -405,6 +443,7 @@ export class HomeDeepComponent implements OnInit, OnDestroy {
     this.deepAnalysisRunning = false;
     this.deepIndeterminate = false;
     try { window.clearInterval(this.pendingTimer); } catch {}
+    try { window.clearInterval(this.deepPollTimer); } catch {}
     this.deepAnalysisStatus = 'Анализ прерван';
   }
 

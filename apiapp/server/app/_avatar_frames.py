@@ -130,6 +130,7 @@ def render_avatar_frames(
     dpi: int = 150,
     limit: Optional[int] = None,
     size: tuple[int, int] = (4, 4),
+    progress_cb: Optional[callable] = None,
 ) -> tuple[int, List[Path]]:
     """
     Render per-frame avatar images from CSV into PNG files.
@@ -176,6 +177,7 @@ def render_avatar_frames(
     out_files: List[Path] = []
     out_prefix.parent.mkdir(parents=True, exist_ok=True)
 
+    total = int(values.shape[0])
     for i, row in enumerate(values):
         au_map = {name: float(val) for name, val in zip(au_names, row.tolist())}
         drew = False
@@ -194,7 +196,15 @@ def render_avatar_frames(
         fig.canvas.draw()
         # Save current frame
         out_file = Path(f"{str(out_prefix)}_aframe_{i:04d}.png")
-        fig.savefig(out_file, dpi=dpi, bbox_inches='tight', pad_inches=0)
+        print(f"[avatar_frames] rendering frame {i+1}/{total} -> {out_file.name}")
+        try:
+            fig.savefig(out_file, dpi=dpi, bbox_inches='tight', pad_inches=0)
+        finally:
+            if callable(progress_cb):
+                try:
+                    progress_cb(i + 1, total)
+                except Exception:
+                    pass
         out_files.append(out_file)
         ax.cla(); ax.set_axis_off()
 
