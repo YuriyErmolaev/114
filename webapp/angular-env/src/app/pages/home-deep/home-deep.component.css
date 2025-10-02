@@ -2,11 +2,16 @@
 
 /* Additional styling for deep analysis results */
 .result-block { margin: 10px 0; }
-.plot-img { max-width: 100%; border: 1px solid #ddd; }
-.gif-img { max-width: 400px; border: 1px solid #ddd; }
+.plot-img { max-width: 100%; border: 1px solid #ddd; border-radius: 6px; }
+.gif-img { max-width: 400px; border: 1px solid #ddd; border-radius: 6px; }
 .landmarks { display: flex; gap: 24px; }
 .cols { color: #666; }
 .error { color: #b00020; }
+
+/* Expected frame preview under main video */
+.expected-frame { margin-top: 10px; }
+.expected-frame h4 { margin: 6px 0; font-size: 13px; color: var(--app-text-muted); }
+.expected-img { width: 260px; max-width: 100%; border: 1px solid #ddd; border-radius: 6px; display: block; background: #fff; }
 
 /* Avatar frames player */
 .avatar-player { display: flex; flex-direction: column; gap: 8px; }
@@ -14,6 +19,16 @@
 .avatar-img { display: block; width: 100%; height: auto; }
 .avatar-controls { display: flex; align-items: center; gap: 8px; }
 .avatar-controls input[type=range] { flex: 1 1 auto; }
+
+/* Skeletons and loaders */
+.skeleton { position: relative; border: 1px dashed var(--app-border-color); border-radius: 6px; background: linear-gradient(90deg, rgba(0,0,0,0.06), rgba(0,0,0,0.12), rgba(0,0,0,0.06)); background-size: 200% 100%; animation: shimmer 1.2s infinite; color: var(--app-text-muted); display: flex; align-items: center; justify-content: center; gap: 10px; }
+.skeleton-plot { height: 240px; }
+.skeleton-stage { height: 260px; }
+.skeleton-frame { width: 260px; height: 146px; }
+@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+/* Spinner sizes (base .spinner in home.css) */
+.spinner.large { width: 26px; height: 26px; border-width: 3px; }
 
 .container { padding: 16px; }
 .uploader, .actions { margin: 12px 0; display: flex; align-items: center; gap: 8px; }

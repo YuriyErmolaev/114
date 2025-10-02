@@ -53,6 +53,19 @@
           </div>
         </ng-container>
       </div>
+      <!-- Expected first frame preview -->
+      <div class="expected-frame" *ngIf="deepAnalysisRunning || firstAvatarFrameUrl">
+        <h4>Ожидаемый кадр</h4>
+        <ng-container *ngIf="firstAvatarFrameUrl; else expectedPlaceholder">
+          <img [src]="firstAvatarFrameUrl" alt="Первый кадр аватара" class="expected-img">
+        </ng-container>
+        <ng-template #expectedPlaceholder>
+          <div class="skeleton skeleton-frame">
+            <div class="spinner large"></div>
+            <span>Ждём первый кадр…</span>
+          </div>
+        </ng-template>
+      </div>
     </div>
 
     <div class="audio-strip">
@@ -146,8 +159,9 @@
             <img [src]="emotionsImgUrl" alt="Emotions" class="plot-img">
           </ng-container>
           <ng-template #emoPlaceholder>
-            <div class="placeholder soft">
-              <div class="placeholder-text">Готовим график…</div>
+            <div class="skeleton skeleton-plot">
+              <div class="spinner"></div>
+              <span>Готовим график…</span>
             </div>
           </ng-template>
         </div>
@@ -169,8 +183,9 @@
             </div>
           </ng-container>
           <ng-template #avatarPlaceholder>
-            <div class="placeholder soft">
-              <div class="placeholder-text">Ожидаем первые кадры…</div>
+            <div class="skeleton skeleton-stage">
+              <div class="spinner"></div>
+              <span>Ожидаем первые кадры…</span>
             </div>
           </ng-template>
         </div>

@@ -330,6 +330,8 @@ export class HomeDeepComponent implements OnInit, OnDestroy {
     }
   }
 
+  firstAvatarFrameUrl: string | null = null;
+
   async startDeepAnalysis(): Promise<void> {
     if (this.deepAnalysisRunning) return;
     if (!this.uploadedFilename && this.loadedDeviceFileName) {
@@ -350,6 +352,7 @@ export class HomeDeepComponent implements OnInit, OnDestroy {
     this.avatarFrames = [];
     this.avatarFrameNames.clear();
     this.avatarIndex = 0;
+    this.firstAvatarFrameUrl = null;
     this.stopAvatar();
 
     // enable pending animation
@@ -411,6 +414,7 @@ export class HomeDeepComponent implements OnInit, OnDestroy {
             this.avatarFrames = files.map(toAbsFile).filter((u: string | null): u is string => !!u);
             this.avatarFps = fps > 0 && fps <= 60 ? fps : 10;
             this.avatarIndex = 0;
+            this.firstAvatarFrameUrl = this.avatarFrames.length ? this.avatarFrames[0] : null;
             this.stopAvatar();
             this.deepIndeterminate = false;
             this.deepAnalysisProgress = 100;
@@ -456,7 +460,9 @@ export class HomeDeepComponent implements OnInit, OnDestroy {
             for (const name of sFrames) {
               if (!this.avatarFrameNames.has(name)) {
                 this.avatarFrameNames.add(name);
-                this.avatarFrames.push(`${this.apiBase}${base}${name}/`);
+                const url = `${this.apiBase}${base}${name}/`;
+                this.avatarFrames.push(url);
+                if (!this.firstAvatarFrameUrl) this.firstAvatarFrameUrl = url;
               }
             }
             if (typeof st?.frames_fps === 'number' && st.frames_fps > 0 && st.frames_fps <= 60) {
@@ -495,6 +501,7 @@ export class HomeDeepComponent implements OnInit, OnDestroy {
               if (!this.avatarFrameNames.has(name)) {
                 this.avatarFrameNames.add(name);
                 this.avatarFrames.push(url);
+                if (!this.firstAvatarFrameUrl) this.firstAvatarFrameUrl = url;
               }
             }
             this.avatarFps = fps > 0 && fps <= 60 ? fps : this.avatarFps;
@@ -536,6 +543,7 @@ export class HomeDeepComponent implements OnInit, OnDestroy {
     try { window.clearInterval(this.pendingTimer); } catch {}
     try { window.clearInterval(this.deepPollTimer); } catch {}
     this.deepAnalysisStatus = 'Анализ прерван';
+    this.firstAvatarFrameUrl = null;
   }
 
   // --- Avatar frames player controls ---
