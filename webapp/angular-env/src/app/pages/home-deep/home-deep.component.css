@@ -1,0 +1,9 @@
+@import '../home/home.component.css';
+
+/* Additional styling for deep analysis results */
+.result-block { margin: 10px 0; }
+.plot-img { max-width: 100%; border: 1px solid #ddd; }
+.gif-img { max-width: 400px; border: 1px solid #ddd; }
+.landmarks { display: flex; gap: 24px; }
+.cols { color: #666; }
+.error { color: #b00020; }

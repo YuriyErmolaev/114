@@ -7,6 +7,7 @@ import {LoginComponent} from "./pages/login/login.component";
 import {authGuard} from "./guards/auth.guard";
 import {MainLayoutComponent} from "./pages/layout/main-layout.component";
 import { HomeComponent } from './pages/home/home.component';
+import { DeepAnalysisComponent } from './pages/deep-analysis/deep-analysis.component';
 import { DashboardComponent } from './pages/dashboard/dashboard.component';
 
 import {NotFoundComponent} from './pages/not-found/not-found.component';
@@ -30,6 +31,7 @@ const routes: Routes = [
     canActivateChild: [authGuard],
     children: [
       { path: 'home', component: HomeComponent },
+      { path: 'home-deep', loadComponent: () => import('./pages/home-deep/home-deep.component').then(m => m.HomeDeepComponent) },
       { path: 'dashboard', component: DashboardComponent },
 //
       { path: 'uploader2', component: Uploader2Component },

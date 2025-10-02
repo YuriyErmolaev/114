@@ -50,3 +50,7 @@ app.include_router(version.router)
 
 app.include_router(core_router, prefix="/core", tags=["Core"])
 
+# Analysis endpoints
+from app.routes.analyze import router as analyze_router
+app.include_router(analyze_router, prefix="/analyze", tags=["Analyze"])
+

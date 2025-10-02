@@ -1,0 +1,57 @@
+<div class="container">
+  <h2>Глубокий анализ видео</h2>
+
+  <div class="uploader">
+    <input type="file" #fileInput (change)="onFilesPicked($event)" accept="video/*" hidden>
+    <button (click)="onOpenPicker()" [disabled]="uploading || running">Выбрать файл</button>
+    <span *ngIf="selectedFile">{{ selectedFile.name }}</span>
+    <button (click)="upload()" [disabled]="!selectedFile || uploading || running">Загрузить</button>
+    <span *ngIf="uploadedFilename" class="ok">Загружено: {{ uploadedFilename }}</span>
+  </div>
+
+  <div class="actions">
+    <button (click)="runAnalysis()" [disabled]="!uploadedFilename || running">Глубокий анализ</button>
+    <span *ngIf="running">Обработка... это может занять время</span>
+  </div>
+
+  <div *ngIf="error" class="error">{{ error }}</div>
+
+  <div class="results" *ngIf="csvUrl || emotionsImgUrl || avatarGifUrl">
+    <div class="result-block" *ngIf="csvUrl">
+      <h3>CSV результаты</h3>
+      <a [href]="csvUrl" target="_blank" rel="noopener">Скачать CSV</a>
+    </div>
+
+    <div class="result-block" *ngIf="emotionsImgUrl">
+      <h3>Графики эмоций</h3>
+      <img [src]="emotionsImgUrl" alt="Emotions plot" class="plot-img">
+    </div>
+
+    <div class="result-block" *ngIf="avatarGifUrl">
+      <h3>Схематический плеер эмоций</h3>
+      <img [src]="avatarGifUrl" alt="Avatar animation" class="gif-img">
+    </div>
+
+    <div class="result-block" *ngIf="firstFrameLandmarks.x.length">
+      <h3>Ландмарки (первый кадр, предпросмотр)</h3>
+      <div class="landmarks">
+        <div>
+          <h4>X</h4>
+          <ul>
+            <li *ngFor="let v of firstFrameLandmarks.x; let i = index">{{ i }}: {{ v | number:'1.0-2' }}</li>
+          </ul>
+        </div>
+        <div>
+          <h4>Y</h4>
+          <ul>
+            <li *ngFor="let v of firstFrameLandmarks.y; let i = index">{{ i }}: {{ v | number:'1.0-2' }}</li>
+          </ul>
+        </div>
+      </div>
+      <div class="cols">
+        <small>Колонки X: {{ landmarksCols.x.join(', ') }}</small><br>
+        <small>Колонки Y: {{ landmarksCols.y.join(', ') }}</small>
+      </div>
+    </div>
+  </div>
+</div>

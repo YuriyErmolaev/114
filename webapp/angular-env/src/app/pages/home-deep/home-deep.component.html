@@ -1,0 +1,219 @@
+<div class="toolbar section">
+  <div class="toolbar-row">
+    <label class="toolbar-field">
+      <span>Тип источника:</span>
+      <select [(ngModel)]="selectedSource" (ngModelChange)="onSourceChange($event)">
+        <option *ngFor="let s of sources" [ngValue]="s.id">{{ s.name }}</option>
+      </select>
+    </label>
+
+    <button class="btn icon" [disabled]="!settingsEnabled"
+            title="Настройки источника"
+            (click)="selectedSource==='ipCamera' ? openIpCameraSettings() : openWebcamSettings()">⚙️</button>
+
+    <input type="file" accept="video/*" hidden #fileInput (change)="onFileChosen($event)">
+    <button class="btn" [disabled]="!secondaryEnabled" (click)="onSecondaryAction(fileInput)">{{ secondaryLabel }}</button>
+    <span class="hint" *ngIf="loadedDeviceFileName || loadedServerUrl || ipCameraUrl">
+      {{ loadedDeviceFileName ? ('Загружено: ' + loadedDeviceFileName) : (loadedServerUrl ? ('Открыто: ' + loadedServerUrl) : (ipCameraUrl ? ('URL: ' + ipCameraUrl) : '')) }}
+    </span>
+
+    <div class="spacer"></div>
+
+    <div class="toolbar-actions right">
+      <button class="btn" (click)="uploadInterview()">Загрузить интервью</button>
+      <button class="btn" [disabled]="selectedSource==='deviceFile'" (click)="conductInterview()">Провести интервью</button>
+    </div>
+  </div>
+</div>
+
+<div class="page">
+  <section class="left">
+    <div class="video-area" *ngIf="true">
+      <div class="main-video" aria-label="Основная камера">
+        <span class="badge u-badge u-pos-tr">[cam-1]</span>
+        <ng-container>
+          <app-video-viewport
+            *ngIf="webcamEnabled"
+            [src]="anSrc || undefined"
+            [sourceMode]="sourceMode"
+            [overlayRender]="overlayRender"
+            [showGrid]="showGrid"
+            [muted]="true"
+            [autoplay]="true">
+          </app-video-viewport>
+          <div class="placeholder" *ngIf="!webcamEnabled">
+            <div class="placeholder-text">
+              <ng-container [ngSwitch]="selectedSource">
+                <span *ngSwitchCase="'ipCamera'">RTSP поток: {{ ipCameraUrl || 'URL не задан' }}</span>
+                <span *ngSwitchCase="'serverFile'">Файл с сервера: {{ loadedServerUrl || '—' }}</span>
+                <span *ngSwitchCase="'deviceFile'">Файл с устройства: {{ loadedDeviceFileName || '—' }}</span>
+                <span *ngSwitchDefault>Нет данных</span>
+              </ng-container>
+            </div>
+          </div>
+        </ng-container>
+      </div>
+    </div>
+
+    <div class="audio-strip">
+      <div class="wave-placeholder">График звука (stub)</div>
+    </div>
+
+    <div class="picker-row">
+      <div class="mask-chips" *ngIf="landmarksEnabled || gesturesEnabled || poseEnabled">
+        <span class="chip" *ngIf="landmarksEnabled">
+          Мимика (лицо)
+          <button type="button" class="x" (click)="disableMask('mimic')" aria-label="убрать">×</button>
+        </span>
+        <span class="chip" *ngIf="gesturesEnabled">
+          Жесты (руки)
+          <button type="button" class="x" (click)="disableMask('gestures')" aria-label="убрать">×</button>
+        </span>
+        <span class="chip" *ngIf="poseEnabled">
+          Поза (скелет)
+          <button type="button" class="x" (click)="disableMask('pose')" aria-label="убрать">×</button>
+        </span>
+      </div>
+
+      <div class="category-list">
+        <input class="picker-filter full-width" type="text" [(ngModel)]="categoryFilter" placeholder="Фильтр категорий" />
+        <div class="cat-item" [class.active]="selectedCategory==='mimic'" (click)="toggleMask('mimic')">Мимика (лицо)</div>
+        <div class="cat-item" [class.active]="selectedCategory==='gestures'" (click)="toggleMask('gestures')">Жесты (руки)</div>
+        <div class="cat-item" [class.active]="selectedCategory==='pose'" (click)="toggleMask('pose')">Поза (скелет)</div>
+        <div class="cat-item disabled" title="мок">Речь</div>
+        <div class="cat-item disabled" title="мок">Поведенческие комплексы</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="right">
+    <div class="display-type">
+      <span>Тип отображения:</span>
+      <div class="segmented">
+        <button class="seg-btn" [class.active]="true">График</button>
+        <button class="seg-btn">Значения</button>
+        <button class="seg-btn">Синхронно</button>
+      </div>
+    </div>
+
+    <div class="panel analyze-panel">
+      <h3>Video blend shapes</h3>
+      <div class="panel-content">
+        <div class="chart-area">
+          <app-blend-shapes-chart
+            [items]="videoBlendShapes$ | async"
+            [selectedNames]="[]"
+            [view]="'chart'"
+            [showNames]="true">
+          </app-blend-shapes-chart>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>Управление записью</h3>
+      <div class="panel-content single">
+        <div class="controls-row">
+          <label class="check">
+            <input type="checkbox" [checked]="isRecording" [disabled]="recordingBusy" (change)="toggleRecording(!!$any($event.target)?.checked)">
+            <span>Запись потока</span>
+          </label>
+          <span class="hint" *ngIf="!recordingBusy">{{ isRecording ? 'запись начата' : 'запись остановлена' }}</span>
+          <span class="hint" *ngIf="recordingBusy">выполняется…</span>
+        </div>
+        <div class="controls-row">
+          <button class="btn" (click)="onSaveClick()">Сохранить</button>
+          <button class="btn" [disabled]="deepAnalysisRunning || !uploadedFilename" (click)="startDeepAnalysis()">Глубокий анализ</button>
+          <button class="btn ghost" [disabled]="!deepAnalysisRunning" (click)="cancelDeepAnalysis()">Прервать анализ</button>
+        </div>
+        <div class="controls-row" *ngIf="deepAnalysisRunning || deepAnalysisStatus">
+          <div class="progress" aria-label="Прогресс глубокого анализа">
+            <div class="bar" [style.width.%]="deepAnalysisProgress"></div>
+          </div>
+          <span class="hint">{{ deepAnalysisStatus }}</span>
+        </div>
+        <div *ngIf="error" class="error">{{ error }}</div>
+      </div>
+    </div>
+
+    <div class="panel" *ngIf="csvUrl || emotionsImgUrl || avatarGifUrl">
+      <h3>Результаты глубокого анализа</h3>
+      <div class="panel-content single">
+        <div class="result-block" *ngIf="csvUrl">
+          <h4>CSV</h4>
+          <a [href]="csvUrl" target="_blank" rel="noopener">Скачать CSV</a>
+        </div>
+        <div class="result-block" *ngIf="emotionsImgUrl">
+          <h4>Графики эмоций</h4>
+          <img [src]="emotionsImgUrl" alt="Emotions" class="plot-img">
+        </div>
+        <div class="result-block" *ngIf="avatarGifUrl">
+          <h4>Схематический плеер</h4>
+          <img [src]="avatarGifUrl" alt="Avatar" class="gif-img">
+        </div>
+        <div class="result-block" *ngIf="firstFrameLandmarks.x.length">
+          <h4>Ландмарки (первый кадр)</h4>
+          <div class="landmarks">
+            <div>
+              <h5>X</h5>
+              <ul>
+                <li *ngFor="let v of firstFrameLandmarks.x; let i = index">{{ i }}: {{ v | number:'1.0-2' }}</li>
+              </ul>
+            </div>
+            <div>
+              <h5>Y</h5>
+              <ul>
+                <li *ngFor="let v of firstFrameLandmarks.y; let i = index">{{ i }}: {{ v | number:'1.0-2' }}</li>
+              </ul>
+            </div>
+          </div>
+          <div class="cols">
+            <small>Колонки X: {{ landmarksCols.x.join(', ') }}</small><br>
+            <small>Колонки Y: {{ landmarksCols.y.join(', ') }}</small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- Modals copied from Home -->
+<div class="modal-backdrop" *ngIf="showServerFileDialog" (click)="cancelServerUrl()"></div>
+<div class="modal" *ngIf="showServerFileDialog">
+  <h3>Открыть файл с сервера</h3>
+  <label>URL: <input [(ngModel)]="serverUrlInput" placeholder="https://.../video.mp4" /></label>
+  <div class="modal-actions">
+    <button class="btn" (click)="confirmServerUrl()">Открыть</button>
+    <button class="btn ghost" (click)="cancelServerUrl()">Отмена</button>
+  </div>
+</div>
+
+<div class="modal-backdrop" *ngIf="showSavingModal" (click)="closeSaveModal()"></div>
+<div class="modal" *ngIf="showSavingModal">
+  <h3>Сохранение</h3>
+  <div class="saving">
+    <div class="spinner" *ngIf="savingInProgress"></div>
+    <span>{{ savingInProgress ? 'сохраняем запись' : 'запись сохранена' }}</span>
+  </div>
+  <div class="modal-actions" *ngIf="!savingInProgress">
+    <button class="btn" (click)="closeSaveModal()">Ок</button>
+  </div>
+</div>
+
+<div class="modal-backdrop" *ngIf="showWebcamSettings" (click)="closeWebcamSettings()"></div>
+<div class="modal" *ngIf="showWebcamSettings">
+  <h3>Свойства источника</h3>
+  <p>Настройки (заглушка).</p>
+  <div class="modal-actions">
+    <button class="btn" (click)="closeWebcamSettings()">Закрыть</button>
+  </div>
+</div>
+
+<div class="modal-backdrop" *ngIf="showIpCameraSettings" (click)="closeIpCameraSettings()"></div>
+<div class="modal" *ngIf="showIpCameraSettings">
+  <h3>IP-камера</h3>
+  <label>RTSP URL: <input [(ngModel)]="ipCameraUrl" placeholder="rtsp://..." /></label>
+  <div class="modal-actions">
+    <button class="btn" (click)="closeIpCameraSettings()">Закрыть</button>
+  </div>
+</div>

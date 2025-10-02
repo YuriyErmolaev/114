@@ -1,0 +1,9 @@
+.container { padding: 16px; }
+.uploader, .actions { margin: 12px 0; display: flex; align-items: center; gap: 8px; }
+.result-block { margin: 16px 0; }
+.error { color: #b00020; margin-top: 8px; }
+.ok { color: #2e7d32; }
+.plot-img { max-width: 100%; border: 1px solid #ddd; }
+.gif-img { max-width: 400px; border: 1px solid #ddd; }
+.landmarks { display: flex; gap: 24px; }
+.cols { color: #666; }
