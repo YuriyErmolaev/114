@@ -22,7 +22,9 @@ RUN . venv/bin/activate \
     && pip install "numpy>=1.26,<2" --only-binary=:all: \
     && deactivate
 
-# Install remaining requirements as before
-RUN . venv/bin/activate && if [ -e "requirements.txt" ]; then pip install -r requirements.txt; fi && deactivate 
+# Install remaining requirements with binary-only wheels and no build isolation
+RUN . venv/bin/activate && pip install --upgrade pip setuptools wheel && \
+    pip install --only-binary=:all: -r requirements.txt && \
+    deactivate
 
 CMD ["/usr/local/bin/server-start.sh"]
