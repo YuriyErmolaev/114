@@ -52,21 +52,22 @@ app.include_router(core_router, prefix="/core", tags=["Core"])
 
 # Analysis endpoints
 from app.routes.analyze import router as analyze_router
+# Primary mount (aligns with working '/core' style: no extra prefix beyond root)
 app.include_router(analyze_router, prefix="/analyze", tags=["Analyze"])
-# Compatibility mount to handle direct calls with '/api/v1' in path when root_path is not set by proxy
-app.include_router(analyze_router, prefix="/api/v1/analyze", tags=["Analyze-Compat"])
+# Additional compat mount under '/core/analyze' to mirror working '/core' base
+app.include_router(analyze_router, prefix="/core/analyze", tags=["Analyze-CoreCompat"])
 
-
-
-# Debug: list registered routes on startup
-try:
-    print("[api] Registered routes:")
-    for r in app.router.routes:
-        try:
-            methods = ",".join(sorted(getattr(r, "methods", [])))
-            path = getattr(r, "path", str(getattr(r, "path_regex", "")))
-            print(f"[api] {methods or ''} {path}")
-        except Exception:
-            pass
-except Exception:
-    pass
+# Debug: list registered routes on startup (after app init)
+@app.on_event("startup")
+async def _print_routes():
+    try:
+        print("[api] Registered routes:")
+        for r in app.router.routes:
+            try:
+                methods = ",".join(sorted(getattr(r, "methods", [])))
+                path = getattr(r, "path", str(getattr(r, "path_regex", "")))
+                print(f"[api] {methods or ''} {path}")
+            except Exception:
+                pass
+    except Exception:
+        pass

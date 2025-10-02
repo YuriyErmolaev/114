@@ -12,6 +12,13 @@ services:
     build:
       context: .
       dockerfile: apiapp/Dockerfile
+    environment:
+      SRC_ROOT: /server
+      DATA_ROOT: /ai_data
+    volumes:
+      - ./apiapp/server:/server:rw
+      - ./ai_data:/ai_data:rw
+      - ./artifacts:/artifacts:rw
     ports:
       - "${APIAPP_HTTP_PORT:-18080}:8000"
 

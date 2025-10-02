@@ -368,8 +368,8 @@ export class HomeDeepComponent implements OnInit, OnDestroy {
     };
 
     try {
-      // Try async route with fallbacks (/analyze vs /api/v1/analyze), then fallback to sync /run
-      const bases = ['', '/api/v1'];
+      // Try async route with fallbacks (/analyze, /core/analyze, /api/v1/analyze), then fallback to sync /run
+      const bases = ['', '/core', '/api/v1'];
       let usedPrefix: string | null = null;
       let taskId: string | null = null;
 

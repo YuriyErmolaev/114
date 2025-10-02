@@ -52,12 +52,32 @@ if [ ! -z "${PACKAGES_LIST}" ]; then
     done
 fi
 
+# Install requirements only if they changed (speed up dev reloads)
+REQ_HASH_FILE=".venv_reqs_hash"
+CUR_HASH=""
 if [ -e 'requirements.txt' ]; then
-  pip install -r requirements.txt
+  CUR_HASH+=$(sha256sum requirements.txt | awk '{print $1}')
 fi
-
 if [ -e 'app/requirements.txt' ]; then
-  pip install -r app/requirements.txt
+  CUR_HASH+=$(sha256sum app/requirements.txt | awk '{print $1}')
+fi
+NEED_INSTALL=1
+if [ -e "${REQ_HASH_FILE}" ]; then
+  OLD_HASH=$(cat ${REQ_HASH_FILE})
+  if [ "${OLD_HASH}" = "${CUR_HASH}" ]; then
+    NEED_INSTALL=0
+  fi
+fi
+if [ ${NEED_INSTALL} -eq 1 ]; then
+  if [ -e 'requirements.txt' ]; then
+    pip install -r requirements.txt
+  fi
+  if [ -e 'app/requirements.txt' ]; then
+    pip install -r app/requirements.txt
+  fi
+  echo -n "${CUR_HASH}" > ${REQ_HASH_FILE}
+else
+  echo "[dev] requirements unchanged; skipping pip install"
 fi
 
 exec python3 -m main
