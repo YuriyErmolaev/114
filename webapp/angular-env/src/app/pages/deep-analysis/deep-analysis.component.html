@@ -11,20 +11,36 @@
 
   <div class="actions">
     <button (click)="runAnalysis()" [disabled]="!uploadedFilename || running">Глубокий анализ</button>
-    <span *ngIf="running">Обработка... это может занять время</span>
+    <span *ngIf="running">
+      Обработка... <ng-container *ngIf="progress !== null">{{ progress | number:'1.0-0' }}%</ng-container>
+      <ng-container *ngIf="statusMessage"> — {{ statusMessage }}</ng-container>
+    </span>
+    <button *ngIf="running" (click)="cancelAnalysis()">Прервать анализ</button>
   </div>
 
   <div *ngIf="error" class="error">{{ error }}</div>
 
-  <div class="results" *ngIf="emotionsImgUrl || avatarGifUrl">
+  <div class="results" *ngIf="emotionsImgUrl || avatarGifUrl || currentFrameUrl">
     <div class="result-block" *ngIf="emotionsImgUrl">
       <h3>Графики эмоций</h3>
       <img [src]="emotionsImgUrl" alt="Emotions plot" class="plot-img">
     </div>
 
+    <!-- Progressive avatar frames player -->
+    <div class="result-block" *ngIf="currentFrameUrl">
+      <h3>Схематический плеер эмоций (live)</h3>
+      <img [src]="currentFrameUrl" alt="Avatar frame" class="gif-img">
+    </div>
+
+    <!-- Final GIF fallback/display -->
     <div class="result-block" *ngIf="avatarGifUrl">
       <h3>Схематический плеер эмоций</h3>
       <img [src]="avatarGifUrl" alt="Avatar animation" class="gif-img">
+    </div>
+
+    <!-- CSV link when ready -->
+    <div class="result-block" *ngIf="csvUrl">
+      <a [href]="csvUrl" target="_blank" rel="noopener">Скачать CSV</a>
     </div>
   </div>
 </div>
