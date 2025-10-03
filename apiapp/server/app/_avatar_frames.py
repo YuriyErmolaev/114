@@ -11,6 +11,30 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
+# SciPy compatibility shim for py-feat expecting scipy.integrate.simps on modern SciPy
+try:  # pragma: no cover - best-effort compatibility
+    from scipy import integrate as _integrate  # type: ignore
+    if not hasattr(_integrate, "simps"):
+        from scipy.integrate import simpson as _simpson  # type: ignore
+        setattr(_integrate, "simps", _simpson)
+except Exception:
+    pass
+
+# Compatibility shim for environments where lib2to3 is unavailable (e.g., Python 3.12+)
+try:  # pragma: no cover - best-effort
+    import sys as _sys, types as _types  # noqa: F401
+    if 'lib2to3.pytree' not in _sys.modules:
+        _lib2to3 = _types.ModuleType('lib2to3')
+        _pytree = _types.ModuleType('lib2to3.pytree')
+        def convert(node):  # minimal stub used by py-feat's ResMaskNet wrapper
+            return node
+        _pytree.convert = convert  # type: ignore
+        _lib2to3.pytree = _pytree  # type: ignore
+        _sys.modules['lib2to3'] = _lib2to3
+        _sys.modules['lib2to3.pytree'] = _pytree
+except Exception:
+    pass
+
 # Optional py-feat helpers
 try:  # pragma: no cover
     from feat.utils.io import read_feat as _read_feat  # type: ignore
@@ -62,32 +86,30 @@ def _load_csv(path: Path):
 
 
 def _collect_au_columns_real(df) -> List[str]:
+    """Prefer AUxx_r and preserve CSV order; fallback to AUxx preserving order."""
     cols = list(df.columns)
     au_pat = re.compile(r"^AU(\d{2})$")
     aur_pat = re.compile(r"^AU(\d{2})_r$")
-    au_cols = [c for c in cols if isinstance(c, str) and au_pat.match(c)]
-    if au_cols:
-        au_cols.sort(key=lambda c: int(au_pat.match(c).group(1)))  # type: ignore
-        return au_cols
+    # Prefer AUxx_r first, keep DataFrame order (no sorting)
     aur_cols = [c for c in cols if isinstance(c, str) and aur_pat.match(c)]
     if aur_cols:
-        aur_cols.sort(key=lambda c: int(aur_pat.match(c).group(1)))  # type: ignore
         return aur_cols
+    # Fallback to AUxx, keep order
+    au_cols = [c for c in cols if isinstance(c, str) and au_pat.match(c)]
+    if au_cols:
+        return au_cols
     return []
 
 
 def _collect_au_columns_hmm(df) -> List[str]:
+    """Return HMM_AUexp_AUxx columns preserving CSV/DataFrame order (no numeric sort)."""
     cols = list(df.columns)
     pat = re.compile(r"^HMM_AUexp_(AU(\d{2}))$")
-    pairs: List[tuple[int, str]] = []
+    hmm_cols: List[str] = []
     for c in cols:
-        if isinstance(c, str):
-            m = pat.match(c)
-            if m:
-                au_num = int(m.group(2))
-                pairs.append((au_num, c))
-    pairs.sort(key=lambda t: t[0])
-    return [c for _, c in pairs]
+        if isinstance(c, str) and pat.match(c):
+            hmm_cols.append(c)
+    return hmm_cols
 
 
 def _values_from_columns(df, cols: List[str]) -> Tuple[np.ndarray, List[str]]:
@@ -180,24 +202,36 @@ def _plot_face_fallback(ax, au_map: dict) -> None:
 
 
 def _try_plot_face(ax, au_map: dict, row) -> None:
-    """Try py-feat's plot_face with multiple signatures; fallback to our schematic face."""
-    if plot_face is not None:
-        try:
-            plot_face(model=None, ax=ax, au=au_map)  # type: ignore
-            return
-        except Exception:
-            try:
-                plot_face(ax=ax, au=au_map)  # type: ignore
-                return
-            except Exception:
-                try:
-                    plot_face(model=None, ax=ax, au=row)  # type: ignore
-                    return
-                except Exception:
-                    pass
-    # Fallback
-    print("[avatar_frames] plot_face unavailable or failed; using built-in schematic face")
-    _plot_face_fallback(ax, au_map)
+    """Use py-feat's plot_face like in face_avatar_to_html.py; fallback to schematic face if unavailable.
+    """
+    # If py-feat is missing, draw our schematic face fallback (not bars)
+    if plot_face is None:
+        _plot_face_fallback(ax, au_map)
+        return
+    last_err: Optional[Exception] = None
+    # Try the same sequence of signatures as the baseline demo
+    try:
+        plot_face(model=None, ax=ax, au=au_map)  # preferred: named AU map
+        return
+    except Exception as e1:
+        last_err = e1
+    try:
+        plot_face(ax=ax, au=au_map)
+        return
+    except Exception as e2:
+        last_err = e2
+    try:
+        plot_face(model=None, ax=ax, au=row)  # fallback: ordered AU vector
+        return
+    except Exception as e3:
+        last_err = e3
+    # If all plot_face attempts fail, draw our schematic face fallback to avoid bars/blank
+    try:
+        _plot_face_fallback(ax, au_map)
+        return
+    except Exception:
+        pass
+    raise RuntimeError(f"plot_face failed: {last_err}")
 
 
 def render_avatar_frames(
@@ -240,18 +274,43 @@ def render_avatar_frames(
     if values.size == 0:
         return fps, []
 
-    au_pat = re.compile(r"^AU(\d{2})$")
-    idx_order = sorted(range(len(au_names)), key=lambda i: int(au_pat.match(au_names[i]).group(1)) if au_pat.match(au_names[i]) else 999)  # type: ignore
-    values = values[:, idx_order]
-    au_names = [au_names[i] for i in idx_order]
+    # Parity with face_avatar_to_html.py: try artifact-based AU matrix for source=real
+    using_artifacts = False
+    if source == "real":
+        try:
+            import json
+            art_dir = Path("artifacts")
+            X_path = art_dir / "X.npy"
+            meta_path = art_dir / "meta.json"
+            if X_path.exists() and meta_path.exists():
+                with open(meta_path, "r", encoding="utf-8") as _f:
+                    meta = json.load(_f)
+                raw_mult = float(meta.get("raw_data_multiplier", 1.0)) or 1.0
+                labels_meta = list(meta.get("labels", []))
+                X = np.load(X_path)
+                if X.ndim == 2 and X.shape[1] == len(labels_meta) and X.shape[0] > 0:
+                    values = X.astype(float) / raw_mult
+                    au_names = labels_meta
+                    using_artifacts = True
+        except Exception:
+            using_artifacts = False
+
+    # Notebook parity: if not using artifacts, shift each AU by its minimum so baseline is zero
+    if not using_artifacts:
+        try:
+            col_mins = np.nanmin(values, axis=0)
+            values = values - col_mins
+        except Exception:
+            pass
 
     if isinstance(limit, int) and limit > 0:
         values = values[:limit]
 
-    # Convert pixel size to inches for matplotlib
-    fig_w = max(100, int(size[0])) / float(dpi)
-    fig_h = max(100, int(size[1])) / float(dpi)
-    fig, ax = plt.subplots(figsize=(fig_w, fig_h), dpi=dpi)
+    # Convert pixel size to inches for matplotlib (100 dpi parity with demo)
+    fig_dpi = 100
+    fig_w = max(100, int(size[0])) / float(fig_dpi)
+    fig_h = max(100, int(size[1])) / float(fig_dpi)
+    fig, ax = plt.subplots(figsize=(fig_w, fig_h), dpi=fig_dpi)
     # White background
     try:
         fig.patch.set_facecolor("white")
