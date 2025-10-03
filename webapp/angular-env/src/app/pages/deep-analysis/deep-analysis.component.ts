@@ -49,8 +49,19 @@ export class DeepAnalysisComponent implements OnInit, OnDestroy {
   landmarksCols: { x: string[]; y: string[] } = { x: [], y: [] };
   firstFrameLandmarks: { x: number[]; y: number[] } = { x: [], y: [] };
 
+    // CSV name for staged pipeline
+    private csvName: string | null = null;
+
+  // Staged task ids
+  private predictTaskId: string | null = null;
+  private emoTaskId: string | null = null;
+  private framesTaskId: string | null = null;
+
   // timers
-  private pollTimer: any = null;
+  private pollPredictTimer: any = null;
+  private pollEmoTimer: any = null;
+  private pollFramesTimer: any = null;
+  private pollTimer: any = null; // legacy /run_async polling
   private playbackTimer: any = null;
 
   constructor(private http: HttpClient, private session: SessionService) {}
@@ -67,9 +78,17 @@ export class DeepAnalysisComponent implements OnInit, OnDestroy {
   }
 
   private clearTimers(): void {
-    if (this.pollTimer) {
-      clearTimeout(this.pollTimer);
-      this.pollTimer = null;
+    if (this.pollPredictTimer) {
+      clearTimeout(this.pollPredictTimer);
+      this.pollPredictTimer = null;
+    }
+    if (this.pollEmoTimer) {
+      clearTimeout(this.pollEmoTimer);
+      this.pollEmoTimer = null;
+    }
+    if (this.pollFramesTimer) {
+      clearTimeout(this.pollFramesTimer);
+      this.pollFramesTimer = null;
     }
     if (this.playbackTimer) {
       clearInterval(this.playbackTimer);
@@ -182,6 +201,12 @@ export class DeepAnalysisComponent implements OnInit, OnDestroy {
     this.avatarGifUrl = null;
     this.csvUrl = null;
 
+    // staged ids & csv
+    this.predictTaskId = null;
+    this.emoTaskId = null;
+    this.framesTaskId = null;
+    this.csvName = null;
+
     // frames
     this.framesBaseUrl = null;
     this.frames = [];
@@ -199,53 +224,28 @@ export class DeepAnalysisComponent implements OnInit, OnDestroy {
 
     this.resetRunState();
 
-    const body = {
+    const payload = {
       session_id: this.sessionId,
       filename: this.uploadedFilename,
       artifacts: 'artifacts',
       fps: 12,
       skip_frames: 1,
       face_threshold: 0.9,
-      render_avatar: true,
-      avatar_source: 'hmm'
     };
 
-    // Logging request body (safe fields)
-    console.log('[DeepAnalysis] START run_async payload', {
-      session_id: body.session_id,
-      filename: body.filename,
-      fps: body.fps,
-      skip_frames: body.skip_frames,
-      face_threshold: body.face_threshold,
-      render_avatar: body.render_avatar,
-      avatar_source: body.avatar_source,
-    });
-
-    // Prefer async API
-    const runAsyncUrl = `${this.apiBase}/analyze/run_async`;
+    // Stage 1: start_predict
+    console.log('[DeepAnalysis] START predict payload', payload);
+    const startPredictUrl = `${this.apiBase}/analyze/start_predict`;
     try {
-      const startResp: any = await lastValueFrom(this.http.post(runAsyncUrl, body));
-      console.log('[DeepAnalysis] START run_async response', startResp);
-      const taskId = startResp?.task_id;
-      if (!taskId) throw new Error('No task_id returned');
-      this.schedulePoll(taskId, 0);
-      return;
+      const startResp: any = await lastValueFrom(this.http.post(startPredictUrl, payload));
+      console.log('[DeepAnalysis] START predict response', startResp);
+      this.predictTaskId = startResp?.task_id || null;
+      if (!this.predictTaskId) throw new Error('No task_id from start_predict');
+      this.schedulePredictPoll(0);
     } catch (e: any) {
-      console.error('[DeepAnalysis] run_async error', e?.stack || e?.message || e);
-      // Fallback to sync route for backward compatibility
-      if (e?.status && [404, 405, 501].includes(e.status)) {
-        await this.runAnalysisSyncFallback(body);
-        return;
-      }
-      // If other error types (network, etc.), try fallback once as well
-      try {
-        await this.runAnalysisSyncFallback(body);
-        return;
-      } catch (e2: any) {
-        console.error('[DeepAnalysis] Sync fallback failed', e2?.stack || e2?.message || e2);
-        this.error = e2?.message || e?.message || 'Анализ не выполнен';
-        this.running = false;
-      }
+      console.error('[DeepAnalysis] start_predict error', e?.stack || e?.message || e);
+      // Fallback to legacy async route
+      await this.startLegacyAsyncFlow(payload);
     }
   }
 
@@ -260,6 +260,179 @@ export class DeepAnalysisComponent implements OnInit, OnDestroy {
       throw e;
     } finally {
       this.running = false;
+    }
+  }
+
+  private schedulePredictPoll(delayMs: number): void {
+    if (!this.predictTaskId) return;
+    this.pollPredictTimer = setTimeout(() => this.pollPredictStatus(), delayMs);
+  }
+
+  private async pollPredictStatus(): Promise<void> {
+    if (this.canceled || !this.predictTaskId) return;
+    const jitter = 700 + Math.floor(Math.random() * 500);
+    const url = `${this.apiBase}/analyze/status_predict/${encodeURIComponent(this.predictTaskId)}`;
+    try {
+      const st: any = await lastValueFrom(this.http.get(url));
+      const csvReady = !!st?.csv_name;
+      console.log('[DeepAnalysis] STATUS predict', { url, status: st?.status, progress: st?.progress, csvReady });
+      if (typeof st?.progress === 'number') this.progress = Math.max(0, Math.min(100, st.progress));
+      this.statusMessage = st?.message || null;
+
+      if (csvReady) {
+        this.csvName = st.csv_name;
+        this.csvUrl = this.toAbs(st.csv_url);
+        // Kick off emotions and frames stages in parallel if not started
+        if (!this.emoTaskId && this.csvName) {
+          await this.startEmotionsStage(this.csvName);
+        }
+        if (!this.framesTaskId && this.csvName) {
+          await this.startFramesStage(this.csvName);
+        }
+      }
+
+      if (st?.status === 'error') {
+        console.error('[DeepAnalysis] STATUS predict error', st?.error);
+        this.error = st?.error || 'Ошибка предсказания';
+        return;
+      }
+
+      if (st?.status !== 'done') {
+        this.schedulePredictPoll(jitter);
+      }
+    } catch (e: any) {
+      console.error('[DeepAnalysis] STATUS predict fetch error', e?.stack || e?.message || e);
+      this.error = e?.message || 'Ошибка статуса предсказания';
+    }
+  }
+
+  private async startEmotionsStage(csvName: string): Promise<void> {
+    const url = `${this.apiBase}/analyze/start_emotions`;
+    const payload = { session_id: this.sessionId, csv_name: csvName };
+    try {
+      const resp: any = await lastValueFrom(this.http.post(url, payload));
+      this.emoTaskId = resp?.task_id || null;
+      this.scheduleEmoPoll(0);
+    } catch (e: any) {
+      console.error('[DeepAnalysis] start_emotions error', e?.stack || e?.message || e);
+    }
+  }
+
+  private scheduleEmoPoll(delayMs: number): void {
+    if (!this.emoTaskId) return;
+    this.pollEmoTimer = setTimeout(() => this.pollEmoStatus(), delayMs);
+  }
+
+  private async pollEmoStatus(): Promise<void> {
+    if (this.canceled || !this.emoTaskId) return;
+    const jitter = 700 + Math.floor(Math.random() * 500);
+    const url = `${this.apiBase}/analyze/status_emotions/${encodeURIComponent(this.emoTaskId)}`;
+    try {
+      const st: any = await lastValueFrom(this.http.get(url));
+      console.log('[DeepAnalysis] STATUS emotions', { url, status: st?.status, progress: st?.progress, hasEmo: !!st?.emo_url });
+      if (!this.emotionsImgUrl && st?.emo_url) {
+        this.setEmotionsImgFrom(st.emo_url);
+      }
+      if (st?.status === 'error') {
+        console.error('[DeepAnalysis] STATUS emotions error', st?.error);
+        return;
+      }
+      if (st?.status !== 'done' || !st?.emo_url) {
+        this.scheduleEmoPoll(jitter);
+      }
+    } catch (e: any) {
+      console.error('[DeepAnalysis] STATUS emotions fetch error', e?.stack || e?.message || e);
+    }
+  }
+
+  private async startFramesStage(csvName: string): Promise<void> {
+    const url = `${this.apiBase}/analyze/start_frames`;
+    // Use image mode; source consistent with baseline (hmm by default)
+    const payload = { session_id: this.sessionId, csv_name: csvName, source: 'hmm', fps: this.framesFps, mode: 'image' };
+    try {
+      const resp: any = await lastValueFrom(this.http.post(url, payload));
+      this.framesTaskId = resp?.task_id || null;
+      this.scheduleFramesPoll(0);
+    } catch (e: any) {
+      console.error('[DeepAnalysis] start_frames error', e?.stack || e?.message || e);
+    }
+  }
+
+  private scheduleFramesPoll(delayMs: number): void {
+    if (!this.framesTaskId) return;
+    this.pollFramesTimer = setTimeout(() => this.pollFramesStatus(), delayMs);
+  }
+
+  private async pollFramesStatus(): Promise<void> {
+    if (this.canceled || !this.framesTaskId) return;
+    const jitter = 700 + Math.floor(Math.random() * 500);
+    const url = `${this.apiBase}/analyze/status_frames/${encodeURIComponent(this.framesTaskId)}`;
+    try {
+      const st: any = await lastValueFrom(this.http.get(url));
+      const baseSet = !!(st?.frames_base_url || this.framesBaseUrl);
+      const fps = st?.frames_fps;
+      const newCount = Array.isArray(st?.frames) ? st.frames.length : 0;
+      console.log('[DeepAnalysis] STATUS frames', { url, status: st?.status, progress: st?.progress, baseSet, fps, newCount });
+
+      if (!this.framesBaseUrl && st?.frames_base_url) {
+        this.framesBaseUrl = st.frames_base_url;
+        const isAbs = /^https?:\/\//i.test(this.framesBaseUrl || '');
+        console.log('[DeepAnalysis] FRAMES base detected', { frames_base_url: this.framesBaseUrl, isAbs });
+      }
+      if (typeof fps === 'number' && fps > 0 && fps !== this.framesFps) {
+        this.framesFps = Math.max(1, Math.min(30, Math.floor(fps)));
+        const interval = Math.max(30, Math.floor(1000 / Math.max(1, this.framesFps)));
+        console.log('[DeepAnalysis] PLAYBACK fps set', { fps: this.framesFps, intervalMs: interval });
+        this.startPlaybackTimer();
+      }
+
+      const base = this.framesBaseUrl || '';
+      const newNames: string[] = Array.isArray(st?.frames) ? st.frames : [];
+      if (newNames.length) this.appendFrames(base, newNames);
+
+      if (st?.status === 'error') {
+        console.error('[DeepAnalysis] STATUS frames error', st?.error);
+        return;
+      }
+      if (st?.status !== 'done') {
+        this.scheduleFramesPoll(jitter);
+      }
+    } catch (e: any) {
+      console.error('[DeepAnalysis] STATUS frames fetch error', e?.stack || e?.message || e);
+    }
+  }
+
+  private async startLegacyAsyncFlow(body: any): Promise<void> {
+    // Preserve old behavior as fallback
+    console.log('[DeepAnalysis] START run_async payload', {
+      session_id: body.session_id,
+      filename: body.filename,
+      fps: body.fps,
+      skip_frames: body.skip_frames,
+      face_threshold: body.face_threshold,
+      render_avatar: true,
+      avatar_source: 'hmm',
+    });
+    const runAsyncUrl = `${this.apiBase}/analyze/run_async`;
+    try {
+      const startResp: any = await lastValueFrom(this.http.post(runAsyncUrl, { ...body, render_avatar: true, avatar_source: 'hmm' }));
+      console.log('[DeepAnalysis] START run_async response', startResp);
+      const taskId = startResp?.task_id;
+      if (!taskId) throw new Error('No task_id returned');
+      this.schedulePoll(taskId, 0);
+    } catch (e: any) {
+      console.error('[DeepAnalysis] run_async error', e?.stack || e?.message || e);
+      if (e?.status && [404, 405, 501].includes(e.status)) {
+        await this.runAnalysisSyncFallback(body);
+      } else {
+        try {
+          await this.runAnalysisSyncFallback(body);
+        } catch (e2: any) {
+          console.error('[DeepAnalysis] Sync fallback failed', e2?.stack || e2?.message || e2);
+          this.error = e2?.message || e?.message || 'Анализ не выполнен';
+          this.running = false;
+        }
+      }
     }
   }
 
@@ -380,6 +553,9 @@ export class DeepAnalysisComponent implements OnInit, OnDestroy {
     this.canceled = true;
     this.statusMessage = 'Отменено пользователем';
     this.clearTimers();
+    this.predictTaskId = null;
+    this.emoTaskId = null;
+    this.framesTaskId = null;
     this.running = false;
   }
 

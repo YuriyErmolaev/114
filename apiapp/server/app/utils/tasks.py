@@ -26,6 +26,12 @@ class TaskState:
     frames_base_url: Optional[str] = None
     frames_fps: Optional[int] = None
     emo_url: Optional[str] = None
+    # Staged pipeline additions
+    csv_name: Optional[str] = None
+    csv_url: Optional[str] = None
+    mode: Optional[str] = None  # for frames: 'image' | 'data'
+    data_next_index: int = 0    # for frames data mode
+    data_items: list[dict[str, Any]] = field(default_factory=list)  # buffered AU data items
 
 
 class TaskManager:
