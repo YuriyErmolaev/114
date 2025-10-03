@@ -122,6 +122,84 @@ def _plot_bar_avatar(ax, au_map):
     ax.set_title("AU Avatar", fontsize=8)
 
 
+def _plot_face_fallback(ax, au_map: dict) -> None:
+    """Draw a simple schematic face using Matplotlib primitives based on a few AUs.
+    This avoids bar charts and does not depend on py-feat.
+    """
+    from matplotlib.patches import Circle, Arc
+    # Setup axes
+    ax.set_xlim(-1.0, 1.0)
+    ax.set_ylim(-1.2, 1.2)
+    ax.set_aspect("equal")
+    # Helpers
+    def _get(name: str, scale: float = 1.0) -> float:
+        try:
+            v = float(au_map.get(name, 0.0))
+        except Exception:
+            v = 0.0
+        return max(-1.0, min(1.0, v * scale))
+    # Outline
+    face = Circle((0, 0), radius=0.98, linewidth=2, edgecolor="black", facecolor=(1, 1, 1, 0.0))
+    ax.add_patch(face)
+    # Eyes parameters
+    eye_y = 0.35
+    eye_dx = 0.35
+    eye_base_r = 0.10
+    close_amt = max(0.0, min(1.0, 0.5 * abs(_get("AU06")) + 0.5 * abs(_get("AU07"))))
+    eye_r_y = eye_base_r * (1.0 - 0.7 * close_amt)
+    eye_r_x = eye_base_r
+    left_eye = Circle((-eye_dx, eye_y), radius=eye_base_r, linewidth=1.5, edgecolor="black", facecolor=(0, 0, 0, 0))
+    right_eye = Circle((eye_dx, eye_y), radius=eye_base_r, linewidth=1.5, edgecolor="black", facecolor=(0, 0, 0, 0))
+    ax.add_patch(left_eye)
+    ax.add_patch(right_eye)
+    if close_amt > 0:
+        lid_angle = max(5, int(170 * (1.0 - close_amt)))
+        ax.add_patch(Arc((-eye_dx, eye_y), 2*eye_r_x, 2*eye_r_y, angle=0, theta1=180-lid_angle, theta2=180+lid_angle, lw=1.2))
+        ax.add_patch(Arc((eye_dx, eye_y), 2*eye_r_x, 2*eye_r_y, angle=0, theta1=0-lid_angle, theta2=0+lid_angle, lw=1.2))
+    # Brows
+    au01 = _get("AU01"); au02 = _get("AU02"); au04 = _get("AU04")
+    brow_raise = 0.15 * (max(0.0, au01) + max(0.0, au02))
+    brow_lower = 0.18 * max(0.0, au04)
+    brow_y = 0.58 + brow_raise - brow_lower
+    brow_len = 0.28
+    ax.plot([-eye_dx - brow_len/2, -eye_dx + brow_len/2], [brow_y + 0.03*au02, brow_y - 0.02*au01], color="black", lw=2)
+    ax.plot([eye_dx - brow_len/2, eye_dx + brow_len/2], [brow_y - 0.02*au01, brow_y + 0.03*au02], color="black", lw=2)
+    # Nose
+    ax.plot([0, -0.05, 0.0], [0.35, 0.05, -0.1], color="black", lw=1)
+    # Mouth
+    au12 = _get("AU12"); au15 = _get("AU15"); au20 = _get("AU20")
+    smile = max(0.0, au12); frown = max(0.0, au15); stretch = max(0.0, au20)
+    mouth_y = -0.35 + 0.08 * (smile - frown)
+    mouth_w = 0.8 + 0.3 * stretch
+    mouth_h = 0.25 * (smile - frown)
+    mouth_h = max(-0.35, min(0.5, mouth_h))
+    if mouth_h >= 0:
+        ax.add_patch(Arc((0, mouth_y), mouth_w, 0.6 * (0.4 + mouth_h), angle=0, theta1=200, theta2=340, lw=2))
+    else:
+        ax.add_patch(Arc((0, mouth_y), mouth_w, 0.6 * (0.4 + abs(mouth_h)), angle=0, theta1=20, theta2=160, lw=2))
+
+
+def _try_plot_face(ax, au_map: dict, row) -> None:
+    """Try py-feat's plot_face with multiple signatures; fallback to our schematic face."""
+    if plot_face is not None:
+        try:
+            plot_face(model=None, ax=ax, au=au_map)  # type: ignore
+            return
+        except Exception:
+            try:
+                plot_face(ax=ax, au=au_map)  # type: ignore
+                return
+            except Exception:
+                try:
+                    plot_face(model=None, ax=ax, au=row)  # type: ignore
+                    return
+                except Exception:
+                    pass
+    # Fallback
+    print("[avatar_frames] plot_face unavailable or failed; using built-in schematic face")
+    _plot_face_fallback(ax, au_map)
+
+
 def render_avatar_frames(
     csv_path: Path,
     out_prefix: Path,
@@ -129,11 +207,11 @@ def render_avatar_frames(
     fps: int = 10,
     dpi: int = 150,
     limit: Optional[int] = None,
-    size: tuple[int, int] = (4, 4),
+    size: tuple[int, int] = (400, 500),
     progress_cb: Optional[callable] = None,
 ) -> tuple[int, List[Path]]:
     """
-    Render per-frame avatar images from CSV into PNG files.
+    Render per-frame avatar images from CSV into PNG files (schematic face).
 
     Args:
         csv_path: path to CSV with predictions
@@ -142,7 +220,7 @@ def render_avatar_frames(
         fps: nominal frames per second (returned for UI)
         dpi: DPI for matplotlib figure
         limit: optional limit of frames to render
-        size: figure size in inches (width, height)
+        size: figure size in pixels (width, height)
 
     Returns:
         (fps, list_of_paths)
@@ -170,8 +248,16 @@ def render_avatar_frames(
     if isinstance(limit, int) and limit > 0:
         values = values[:limit]
 
-    # Prepare figure once and reuse
-    fig, ax = plt.subplots(figsize=size, dpi=dpi)
+    # Convert pixel size to inches for matplotlib
+    fig_w = max(100, int(size[0])) / float(dpi)
+    fig_h = max(100, int(size[1])) / float(dpi)
+    fig, ax = plt.subplots(figsize=(fig_w, fig_h), dpi=dpi)
+    # White background
+    try:
+        fig.patch.set_facecolor("white")
+        ax.set_facecolor("white")
+    except Exception:
+        pass
     ax.set_axis_off()
 
     out_files: List[Path] = []
@@ -180,21 +266,8 @@ def render_avatar_frames(
     total = int(values.shape[0])
     for i, row in enumerate(values):
         au_map = {name: float(val) for name, val in zip(au_names, row.tolist())}
-        drew = False
-        if plot_face is not None:
-            try:
-                plot_face(au=au_map, ax=ax)
-                drew = True
-            except Exception:
-                try:
-                    plot_face(au=row, ax=ax)
-                    drew = True
-                except Exception:
-                    drew = False
-        if not drew:
-            _plot_bar_avatar(ax, au_map)
+        _try_plot_face(ax, au_map, row)
         fig.canvas.draw()
-        # Save current frame
         out_file = Path(f"{str(out_prefix)}_aframe_{i:04d}.png")
         print(f"[avatar_frames] rendering frame {i+1}/{total} -> {out_file.name}")
         try:
@@ -206,7 +279,12 @@ def render_avatar_frames(
                 except Exception:
                     pass
         out_files.append(out_file)
-        ax.cla(); ax.set_axis_off()
+        ax.cla()
+        try:
+            ax.set_facecolor("white")
+        except Exception:
+            pass
+        ax.set_axis_off()
 
     plt.close(fig)
     return fps, out_files
