@@ -278,7 +278,7 @@ export class DeepAnalysisComponent implements OnInit, OnDestroy {
       // Frames progressive
       if (!this.framesBaseUrl && st?.frames_base_url) {
         this.framesBaseUrl = st.frames_base_url; // keep as server-provided; we'll prepend apiBase later
-        const isAbs = /^https?:\/\//i.test(this.framesBaseUrl);
+        const isAbs = /^https?:\/\//i.test(this.framesBaseUrl || '');
         console.log('[DeepAnalysis] frames_base_url detected', { frames_base_url: this.framesBaseUrl, absolute: isAbs });
       }
       const base = this.framesBaseUrl || st?.result?.base || '';
