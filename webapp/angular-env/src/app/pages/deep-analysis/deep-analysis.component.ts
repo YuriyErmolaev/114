@@ -82,7 +82,29 @@ export class DeepAnalysisComponent implements OnInit, OnDestroy {
     // If it already looks absolute (http/https), return as is
     if (/^https?:\/\//i.test(p)) return p;
     return `${this.apiBase}${p}`;
+  }
+
+  private cacheBust(url: string | null): string | null {
+    if (!url) return url;
+    const t = Date.now();
+    return url.includes('?') ? `${url}&t=${t}` : `${url}?t=${t}`;
+  }
+
+  private setEmotionsImgFrom(rawUrl?: string | null): void {
+    if (!rawUrl || this.emotionsImgUrl) return;
+    try {
+      const abs = this.toAbs(rawUrl);
+      if (!abs) {
+        console.error('Failed to build emotions image URL', { apiBase: this.apiBase, emo_url: rawUrl });
+        return;
+      }
+      const finalUrl = this.cacheBust(abs);
+      console.log('[DeepAnalysis] Setting emotions image URL', { rawEmoUrl: rawUrl, finalUrl });
+      this.emotionsImgUrl = finalUrl;
+    } catch (e: any) {
+      console.error('Error while building emotions image URL', e?.stack || e?.message || e);
     }
+  }
 
   private async ensureSession(): Promise<void> {
     const url = `${this.apiBase}/core/`;
@@ -180,15 +202,28 @@ export class DeepAnalysisComponent implements OnInit, OnDestroy {
       avatar_source: 'hmm'
     };
 
+    // Logging request body (safe fields)
+    console.log('[DeepAnalysis] Calling run_async with payload', {
+      session_id: body.session_id,
+      filename: body.filename,
+      fps: body.fps,
+      skip_frames: body.skip_frames,
+      face_threshold: body.face_threshold,
+      render_avatar: body.render_avatar,
+      avatar_source: body.avatar_source,
+    });
+
     // Prefer async API
     const runAsyncUrl = `${this.apiBase}/analyze/run_async`;
     try {
       const startResp: any = await lastValueFrom(this.http.post(runAsyncUrl, body));
+      console.log('[DeepAnalysis] run_async response', { runAsyncResponse: startResp });
       const taskId = startResp?.task_id;
       if (!taskId) throw new Error('No task_id returned');
       this.schedulePoll(taskId, 0);
       return;
     } catch (e: any) {
+      console.error('[DeepAnalysis] run_async error', e?.stack || e?.message || e);
       // Fallback to sync route for backward compatibility
       if (e?.status && [404, 405, 501].includes(e.status)) {
         await this.runAnalysisSyncFallback(body);
@@ -199,6 +234,7 @@ export class DeepAnalysisComponent implements OnInit, OnDestroy {
         await this.runAnalysisSyncFallback(body);
         return;
       } catch (e2: any) {
+        console.error('[DeepAnalysis] Sync fallback failed', e2?.stack || e2?.message || e2);
         this.error = e2?.message || e?.message || 'Анализ не выполнен';
         this.running = false;
       }
@@ -209,7 +245,11 @@ export class DeepAnalysisComponent implements OnInit, OnDestroy {
     const url = `${this.apiBase}/analyze/run`;
     try {
       const resp: any = await lastValueFrom(this.http.post(url, body));
+      console.log('[DeepAnalysis] Sync /analyze/run response (finalResult)', { finalResult: resp });
       this.applyFinalResult(resp);
+    } catch (e: any) {
+      console.error('[DeepAnalysis] /analyze/run error', e?.stack || e?.message || e);
+      throw e;
     } finally {
       this.running = false;
     }
@@ -225,23 +265,27 @@ export class DeepAnalysisComponent implements OnInit, OnDestroy {
     const url = `${this.apiBase}/analyze/status/${encodeURIComponent(taskId)}`;
     try {
       const st: any = await lastValueFrom(this.http.get(url));
+      console.log('[DeepAnalysis] Poll status', { statusUrl: url, statusResponse: st });
       // Update progress & status
       if (typeof st?.progress === 'number') this.progress = Math.max(0, Math.min(100, st.progress));
       this.statusMessage = st?.message || null;
 
       // Emotions plot preview as soon as available
       if (!this.emotionsImgUrl && st?.emo_url) {
-        this.emotionsImgUrl = this.toAbs(st.emo_url);
+        this.setEmotionsImgFrom(st.emo_url);
       }
 
       // Frames progressive
       if (!this.framesBaseUrl && st?.frames_base_url) {
         this.framesBaseUrl = st.frames_base_url; // keep as server-provided; we'll prepend apiBase later
+        const isAbs = /^https?:\/\//i.test(this.framesBaseUrl);
+        console.log('[DeepAnalysis] frames_base_url detected', { frames_base_url: this.framesBaseUrl, absolute: isAbs });
       }
       const base = this.framesBaseUrl || st?.result?.base || '';
       const fps = st?.frames_fps || st?.result?.avatar_frames?.fps;
       if (typeof fps === 'number' && fps > 0 && fps !== this.framesFps) {
         this.framesFps = Math.max(1, Math.min(30, Math.floor(fps)));
+        console.log('[DeepAnalysis] Frames FPS updated', { framesFps: this.framesFps });
         this.startPlaybackTimer();
       }
       const newNames: string[] = Array.isArray(st?.frames) ? st.frames : [];
@@ -249,6 +293,7 @@ export class DeepAnalysisComponent implements OnInit, OnDestroy {
 
       // Final result
       if (st?.status === 'done' && st?.result) {
+        console.log('[DeepAnalysis] Final result received', { finalResult: st.result });
         this.applyFinalResult(st.result);
         this.running = false;
         this.clearTimers();
@@ -256,6 +301,7 @@ export class DeepAnalysisComponent implements OnInit, OnDestroy {
       }
 
       if (st?.status === 'error') {
+        console.error('[DeepAnalysis] Status error', st?.error);
         this.error = st?.error || 'Ошибка анализа';
         this.running = false;
         this.clearTimers();
@@ -266,6 +312,7 @@ export class DeepAnalysisComponent implements OnInit, OnDestroy {
       this.schedulePoll(taskId, jitter);
     } catch (e: any) {
       // Stop on status fetch errors
+      console.error('[DeepAnalysis] Poll status error', e?.stack || e?.message || e);
       this.error = e?.message || 'Ошибка статуса анализа';
       this.running = false;
       this.clearTimers();
@@ -275,11 +322,26 @@ export class DeepAnalysisComponent implements OnInit, OnDestroy {
   private appendFrames(base: string, names: string[]): void {
     if (!names || !names.length) return;
     if (!base) return; // wait until we know base URL
+    let duplicates = 0;
+    const addedUrls: string[] = [];
     for (const name of names) {
-      if (!name || this.framesSet.has(name)) continue;
+      if (!name) continue;
+      if (this.framesSet.has(name)) { duplicates++; continue; }
       this.framesSet.add(name);
       const url = this.toAbs(`${base}${name}`);
-      if (url) this.frames.push(url);
+      if (url) {
+        this.frames.push(url);
+        addedUrls.push(url);
+      }
+    }
+    if (addedUrls.length) {
+      console.log('[DeepAnalysis] Appended frames', {
+        newCount: addedUrls.length,
+        sample: addedUrls.slice(0, 3),
+        duplicatesDropped: duplicates,
+      });
+    } else if (duplicates > 0) {
+      console.log('[DeepAnalysis] Frames dedup - dropped duplicates only', { duplicatesDropped: duplicates });
     }
     // start playback if not started
     if (this.frames.length && !this.playbackTimer) {
@@ -294,6 +356,7 @@ export class DeepAnalysisComponent implements OnInit, OnDestroy {
     }
     if (!this.frames.length) return;
     const interval = Math.max(30, Math.floor(1000 / Math.max(1, this.framesFps)));
+    console.log('[DeepAnalysis] Start/Restart playback timer', { framesFps: this.framesFps, intervalMs: interval });
     this.playbackTimer = setInterval(() => {
       if (!this.frames.length) return;
       this.currentFrameUrl = this.frames[this.frameIndex % this.frames.length] || null;
@@ -303,6 +366,7 @@ export class DeepAnalysisComponent implements OnInit, OnDestroy {
 
   cancelAnalysis(): void {
     if (!this.running) return;
+    console.log('User canceled analysis');
     this.canceled = true;
     this.statusMessage = 'Отменено пользователем';
     this.clearTimers();
@@ -313,8 +377,11 @@ export class DeepAnalysisComponent implements OnInit, OnDestroy {
     const toAbs = (p?: string | null) => this.toAbs(p);
     this.csvUrl = toAbs(resp?.csv?.url);
     this.avatarGifUrl = toAbs(resp?.avatar?.url);
-    // prefer final emotions plot URL if provided
-    this.emotionsImgUrl = this.emotionsImgUrl || toAbs(resp?.emotions_plot?.url);
+    // prefer final emotions plot URL if provided and not already shown during polling
+    if (!this.emotionsImgUrl && resp?.emotions_plot?.url) {
+      console.log('[DeepAnalysis] Using final emotions_plot URL (fallback)');
+      this.setEmotionsImgFrom(resp?.emotions_plot?.url);
+    }
 
     // frames: attach full list if available
     const files = resp?.avatar_frames?.files;

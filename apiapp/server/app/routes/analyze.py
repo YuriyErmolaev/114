@@ -159,14 +159,20 @@ def _analysis_worker_impl(payload: Dict[str, Any], task_id: Optional[str] = None
     # Emotions plot
     emo_png_path: Optional[Path] = None
     try:
-        tlog("Emotions plot rendering")
+        tlog("Emotions plot rendering started")
         emo_png_path = downloads_dir / f"{base_stem}_emotions.png"
         _predict_bridge.render_emotions(csv_path=out_csv, out_png=emo_png_path, cols=None, dpi=160)
-        if task_id:
+        exists = emo_png_path.exists()
+        print(f"[analyze] Emotions plot rendered: path={emo_png_path}, exists={exists}")
+        if task_id and exists:
             # expose emotions plot early via status
             emo_url_early = f"{base_prefix}/downloads/{session_id}/{emo_png_path.name}/"
+            print(f"[analyze] Early emo_url set for task {task_id}: {emo_url_early}")
             task_manager.update(task_id, progress=55.0, emo_url=emo_url_early)
+        tlog("Emotions plot rendering finished")
     except Exception as e:
+        import traceback
+        print("[analyze] Emotions plot generation failed:\n", traceback.format_exc())
         tlog(f"Emotions plot failed: {e}")
         emo_png_path = None
 
@@ -178,9 +184,12 @@ def _analysis_worker_impl(payload: Dict[str, Any], task_id: Optional[str] = None
         # Prepare streaming base URL and fps for UI
         if task_id:
             try:
-                task_manager.update(task_id, frames_base_url=f"{base_prefix}/downloads/{session_id}/", frames_fps=max(1, min(25, fps)))
+                fb = f"{base_prefix}/downloads/{session_id}/"
+                task_manager.update(task_id, frames_base_url=fb, frames_fps=max(1, min(25, fps)))
+                print(f"[analyze] frames_base_url set for task {task_id}: {fb}")
             except Exception:
                 pass
+        _pcb_counter = {"count": 0}
         def _pcb(done: int, total: int) -> None:
             if task_id and total > 0:
                 # map frames progress to 60..98
@@ -193,11 +202,17 @@ def _analysis_worker_impl(payload: Dict[str, Any], task_id: Optional[str] = None
                         # We know file pattern: prefix + _aframe_{index:04d}.png; index = done-1
                         name = f"{out_prefix.name}_aframe_{done-1:04d}.png"
                         if st.frames_base_url is None:
-                            task_manager.update(task_id, frames_base_url=f"{base_prefix}/downloads/{session_id}/")
+                            fb2 = f"{base_prefix}/downloads/{session_id}/"
+                            task_manager.update(task_id, frames_base_url=fb2)
+                            print(f"[analyze] frames_base_url set for task {task_id}: {fb2}")
                         if name not in st.frames:
                             task_manager.update(task_id, frames=st.frames + [name])
                 except Exception:
                     pass
+                # Throttled progress print
+                _pcb_counter["count"] += 1
+                if _pcb_counter["count"] % 10 == 0 or done == total:
+                    print(f"[analyze] Frames progress: {done}/{total} (task {task_id})")
                 task_manager.update(task_id, frames_done=done, frames_total=total, progress=pr, message=f"Кадры: {done}/{total}")
         try:
             tlog("Avatar frames rendering")
@@ -211,6 +226,7 @@ def _analysis_worker_impl(payload: Dict[str, Any], task_id: Optional[str] = None
                 limit=None,
                 progress_cb=_pcb,
             )
+            print(f"[analyze] Avatar frames render finished: count={len(avatar_frames)}, fps={frames_fps}, sample={[Path(p).name for p in avatar_frames[:3]]}")
         except Exception as e:
             tlog(f"Avatar frames failed: {e}")
             avatar_frames = []
@@ -228,6 +244,7 @@ def _analysis_worker_impl(payload: Dict[str, Any], task_id: Optional[str] = None
                     limit=None,
                     progress_cb=_pcb,
                 )
+                print(f"[analyze] Avatar frames fallback finished: count={len(avatar_frames)}, fps={frames_fps}, sample={[Path(p).name for p in avatar_frames[:3]]}")
             except Exception as e:
                 tlog(f"Avatar frames fallback failed: {e}")
         # Legacy GIF best-effort (non-blocking for progress)
@@ -315,6 +332,16 @@ async def run_analysis(
 
     Returns JSON with parsed data and URLs to download artifacts (CSV, GIF).
     """
+    safe = {
+        "session_id": payload.get("session_id"),
+        "filename": payload.get("filename"),
+        "fps": payload.get("fps"),
+        "skip_frames": payload.get("skip_frames"),
+        "face_threshold": payload.get("face_threshold"),
+        "render_avatar": payload.get("render_avatar"),
+        "avatar_source": payload.get("avatar_source"),
+    }
+    print("[analyze] /run payload:", json.dumps(safe, ensure_ascii=False))
     # Keep the synchronous route for compatibility; run worker inline
     return _analysis_worker_impl(payload, None)
 
@@ -324,6 +351,16 @@ async def run_analysis_async(
     payload: Dict[str, Any] = Body(...),
 ) -> Dict[str, Any]:
     """Start analysis in background and return task_id immediately."""
+    safe = {
+        "session_id": payload.get("session_id"),
+        "filename": payload.get("filename"),
+        "fps": payload.get("fps"),
+        "skip_frames": payload.get("skip_frames"),
+        "face_threshold": payload.get("face_threshold"),
+        "render_avatar": payload.get("render_avatar"),
+        "avatar_source": payload.get("avatar_source"),
+    }
+    print("[analyze] /run_async payload:", json.dumps(safe, ensure_ascii=False))
     st = task_manager.create()
     task_manager.log(st.id, "Task created")
     task_manager.run(st.id, _analysis_worker_impl, payload, st.id)
@@ -335,6 +372,11 @@ async def analysis_status(task_id: str) -> Dict[str, Any]:
     st = task_manager.get(task_id)
     if not st:
         raise HTTPException(status_code=404, detail="Task not found")
+    try:
+        frames_count = len(st.frames) if isinstance(st.frames, list) else 0
+        print(f"[analyze] /status {task_id}: status={st.status} progress={st.progress} emo_url={'present' if st.emo_url else 'absent'} frames={frames_count}")
+    except Exception:
+        pass
     return {
         "id": st.id,
         "status": st.status,
