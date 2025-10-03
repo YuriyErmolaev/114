@@ -129,14 +129,39 @@ def _analysis_worker_impl(payload: Dict[str, Any], task_id: Optional[str] = None
     downloads_dir = ensure_session_dir(DirectoryEnum.downloads, session_id)
 
     in_video = uploads_dir / filename
-    if not in_video.exists():
+    try:
+        exists_flag = in_video.exists()
+        size_bytes = in_video.stat().st_size if exists_flag else 0
+    except Exception:
+        exists_flag = False
+        size_bytes = 0
+    print("[analyze] input.video.exists", {"exists": exists_flag, "size": size_bytes, "path": str(in_video)})
+    if not exists_flag:
         raise HTTPException(status_code=404, detail=f"Uploaded file not found: {filename}")
 
     base_stem = _safe_name(Path(filename).stem)
     out_csv = workspace_dir / f"{base_stem}_analysis.csv"
 
+    # Artifacts sanity
+    try:
+        _adir = Path(artifacts)
+        _model_exists = (_adir / "model.pkl").exists() or (_adir / "model").exists()
+        _meta_exists = (_adir / "meta.json").exists() or (_adir / "meta.yaml").exists()
+        print("[analyze] artifacts", {"dir": str(_adir), "modelExists": _model_exists, "metaExists": _meta_exists})
+    except Exception:
+        print("[analyze] artifacts", {"dir": str(artifacts), "modelExists": False, "metaExists": False})
+
     # Run prediction to CSV (sync)
     try:
+        print("[analyze] predict.setup", {
+            "video_path": str(in_video),
+            "output_csv": str(out_csv),
+            "artifacts": str(artifacts),
+            "fps": fps,
+            "skip_frames": skip_frames,
+            "face_threshold": face_threshold,
+        })
+        print("[analyze] detect_video.start")
         tlog("Prediction started")
         _predict_bridge.run_predict(
             video_path=in_video,
@@ -146,6 +171,14 @@ def _analysis_worker_impl(payload: Dict[str, Any], task_id: Optional[str] = None
             skip_frames=skip_frames,
             face_threshold=face_threshold,
         )
+        print("[analyze] detect_video.done")
+        # CSV saved info
+        try:
+            _csv_exists = out_csv.exists()
+            _csv_size = out_csv.stat().st_size if _csv_exists else 0
+            print("[analyze] csv.saved", {"path": str(out_csv), "size": _csv_size})
+        except Exception:
+            pass
         if task_id:
             task_manager.update(task_id, progress=40.0)
         tlog("Prediction finished")
@@ -161,14 +194,15 @@ def _analysis_worker_impl(payload: Dict[str, Any], task_id: Optional[str] = None
     try:
         tlog("Emotions plot rendering started")
         emo_png_path = downloads_dir / f"{base_stem}_emotions.png"
+        print("[analyze] emo.render.start", {"csv": str(out_csv)})
         _predict_bridge.render_emotions(csv_path=out_csv, out_png=emo_png_path, cols=None, dpi=160)
         exists = emo_png_path.exists()
-        print(f"[analyze] Emotions plot rendered: path={emo_png_path}, exists={exists}")
-        if task_id and exists:
-            # expose emotions plot early via status
+        if exists:
             emo_url_early = f"{base_prefix}/downloads/{session_id}/{emo_png_path.name}/"
-            print(f"[analyze] Early emo_url set for task {task_id}: {emo_url_early}")
-            task_manager.update(task_id, progress=55.0, emo_url=emo_url_early)
+            print("[analyze] emo.render.done", {"file": str(emo_png_path), "url": emo_url_early})
+            if task_id:
+                print("[analyze] status.emo_url", {"task_id": task_id, "emo_url": emo_url_early})
+                task_manager.update(task_id, progress=55.0, emo_url=emo_url_early)
         tlog("Emotions plot rendering finished")
     except Exception as e:
         import traceback
@@ -189,6 +223,7 @@ def _analysis_worker_impl(payload: Dict[str, Any], task_id: Optional[str] = None
                 print(f"[analyze] frames_base_url set for task {task_id}: {fb}")
             except Exception:
                 pass
+        print("[analyze] frames.render.start", {"source": avatar_source, "fps": max(1, min(25, fps))})
         _pcb_counter = {"count": 0}
         def _pcb(done: int, total: int) -> None:
             if task_id and total > 0:
@@ -205,14 +240,16 @@ def _analysis_worker_impl(payload: Dict[str, Any], task_id: Optional[str] = None
                             fb2 = f"{base_prefix}/downloads/{session_id}/"
                             task_manager.update(task_id, frames_base_url=fb2)
                             print(f"[analyze] frames_base_url set for task {task_id}: {fb2}")
-                        if name not in st.frames:
+                        pth = downloads_dir / name
+                        if pth.exists() and name not in st.frames:
+                            print("[analyze] frame.ready", name)
                             task_manager.update(task_id, frames=st.frames + [name])
                 except Exception:
                     pass
                 # Throttled progress print
                 _pcb_counter["count"] += 1
                 if _pcb_counter["count"] % 10 == 0 or done == total:
-                    print(f"[analyze] Frames progress: {done}/{total} (task {task_id})")
+                    print("[analyze] frames.progress", f"{done}/{total}")
                 task_manager.update(task_id, frames_done=done, frames_total=total, progress=pr, message=f"Кадры: {done}/{total}")
         try:
             tlog("Avatar frames rendering")
@@ -247,6 +284,7 @@ def _analysis_worker_impl(payload: Dict[str, Any], task_id: Optional[str] = None
                 print(f"[analyze] Avatar frames fallback finished: count={len(avatar_frames)}, fps={frames_fps}, sample={[Path(p).name for p in avatar_frames[:3]]}")
             except Exception as e:
                 tlog(f"Avatar frames fallback failed: {e}")
+        print("[analyze] frames.render.done", {"count": len(avatar_frames)})
         # Legacy GIF best-effort (non-blocking for progress)
         try:
             gif_path = downloads_dir / f"{base_stem}_avatar_{avatar_source}.gif"
@@ -374,7 +412,7 @@ async def analysis_status(task_id: str) -> Dict[str, Any]:
         raise HTTPException(status_code=404, detail="Task not found")
     try:
         frames_count = len(st.frames) if isinstance(st.frames, list) else 0
-        print(f"[analyze] /status {task_id}: status={st.status} progress={st.progress} emo_url={'present' if st.emo_url else 'absent'} frames={frames_count}")
+        print("[analyze] /status", task_id, f"status={st.status}", f"progress={st.progress}", f"emo_url={'present' if st.emo_url else 'absent'}", f"frames={frames_count}")
     except Exception:
         pass
     return {

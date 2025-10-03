@@ -95,14 +95,22 @@ export class DeepAnalysisComponent implements OnInit, OnDestroy {
     try {
       const abs = this.toAbs(rawUrl);
       if (!abs) {
-        console.error('Failed to build emotions image URL', { apiBase: this.apiBase, emo_url: rawUrl });
+        console.error('[DeepAnalysis] EMO PLOT build error', { apiBase: this.apiBase, emo_url: rawUrl });
         return;
       }
-      const finalUrl = this.cacheBust(abs);
-      console.log('[DeepAnalysis] Setting emotions image URL', { rawEmoUrl: rawUrl, finalUrl });
-      this.emotionsImgUrl = finalUrl;
+      const finalUrl = this.cacheBust(abs)!;
+      console.log('[DeepAnalysis] EMO PLOT request', { raw: rawUrl, final: finalUrl });
+      const im = new Image();
+      im.onload = () => {
+        console.log('[DeepAnalysis] EMO PLOT loaded', { w: im.naturalWidth, h: im.naturalHeight });
+        this.emotionsImgUrl = finalUrl;
+      };
+      im.onerror = (e) => {
+        console.error('[DeepAnalysis] EMO PLOT load error', e);
+      };
+      im.src = finalUrl;
     } catch (e: any) {
-      console.error('Error while building emotions image URL', e?.stack || e?.message || e);
+      console.error('[DeepAnalysis] EMO PLOT exception', e?.stack || e?.message || e);
     }
   }
 
@@ -203,7 +211,7 @@ export class DeepAnalysisComponent implements OnInit, OnDestroy {
     };
 
     // Logging request body (safe fields)
-    console.log('[DeepAnalysis] Calling run_async with payload', {
+    console.log('[DeepAnalysis] START run_async payload', {
       session_id: body.session_id,
       filename: body.filename,
       fps: body.fps,
@@ -217,7 +225,7 @@ export class DeepAnalysisComponent implements OnInit, OnDestroy {
     const runAsyncUrl = `${this.apiBase}/analyze/run_async`;
     try {
       const startResp: any = await lastValueFrom(this.http.post(runAsyncUrl, body));
-      console.log('[DeepAnalysis] run_async response', { runAsyncResponse: startResp });
+      console.log('[DeepAnalysis] START run_async response', startResp);
       const taskId = startResp?.task_id;
       if (!taskId) throw new Error('No task_id returned');
       this.schedulePoll(taskId, 0);
@@ -265,7 +273,7 @@ export class DeepAnalysisComponent implements OnInit, OnDestroy {
     const url = `${this.apiBase}/analyze/status/${encodeURIComponent(taskId)}`;
     try {
       const st: any = await lastValueFrom(this.http.get(url));
-      console.log('[DeepAnalysis] Poll status', { statusUrl: url, statusResponse: st });
+      console.log('[DeepAnalysis] STATUS', { url, status: st?.status, progress: st?.progress, hasEmo: !!st?.emo_url, newFrames: (Array.isArray(st?.frames) ? st.frames.length : 0) });
       // Update progress & status
       if (typeof st?.progress === 'number') this.progress = Math.max(0, Math.min(100, st.progress));
       this.statusMessage = st?.message || null;
@@ -279,13 +287,14 @@ export class DeepAnalysisComponent implements OnInit, OnDestroy {
       if (!this.framesBaseUrl && st?.frames_base_url) {
         this.framesBaseUrl = st.frames_base_url; // keep as server-provided; we'll prepend apiBase later
         const isAbs = /^https?:\/\//i.test(this.framesBaseUrl || '');
-        console.log('[DeepAnalysis] frames_base_url detected', { frames_base_url: this.framesBaseUrl, absolute: isAbs });
+        console.log('[DeepAnalysis] FRAMES base detected', { frames_base_url: this.framesBaseUrl, isAbs });
       }
       const base = this.framesBaseUrl || st?.result?.base || '';
       const fps = st?.frames_fps || st?.result?.avatar_frames?.fps;
       if (typeof fps === 'number' && fps > 0 && fps !== this.framesFps) {
         this.framesFps = Math.max(1, Math.min(30, Math.floor(fps)));
-        console.log('[DeepAnalysis] Frames FPS updated', { framesFps: this.framesFps });
+        const interval = Math.max(30, Math.floor(1000 / Math.max(1, this.framesFps)));
+        console.log('[DeepAnalysis] PLAYBACK fps set', { fps: this.framesFps, intervalMs: interval });
         this.startPlaybackTimer();
       }
       const newNames: string[] = Array.isArray(st?.frames) ? st.frames : [];
@@ -323,29 +332,30 @@ export class DeepAnalysisComponent implements OnInit, OnDestroy {
     if (!names || !names.length) return;
     if (!base) return; // wait until we know base URL
     let duplicates = 0;
-    const addedUrls: string[] = [];
+    const isAbs = /^https?:\/\//i.test(base || '');
     for (const name of names) {
       if (!name) continue;
       if (this.framesSet.has(name)) { duplicates++; continue; }
+      // Dedup by name to avoid re-requests
       this.framesSet.add(name);
-      const url = this.toAbs(`${base}${name}`);
-      if (url) {
-        this.frames.push(url);
-        addedUrls.push(url);
-      }
+      const raw = (isAbs ? base : `${this.apiBase}${base}`) + name;
+      const finalUrl = this.cacheBust(raw)!;
+      console.log('[DeepAnalysis] FRAME request', { name, finalUrl });
+      const im = new Image();
+      im.onload = () => {
+        console.log('[DeepAnalysis] FRAME loaded', { name, w: im.naturalWidth, h: im.naturalHeight });
+        this.frames.push(finalUrl);
+        if (this.frames.length && !this.playbackTimer) {
+          this.startPlaybackTimer();
+        }
+      };
+      im.onerror = (e) => {
+        console.error('[DeepAnalysis] FRAME load error', { name, finalUrl, e });
+      };
+      im.src = finalUrl;
     }
-    if (addedUrls.length) {
-      console.log('[DeepAnalysis] Appended frames', {
-        newCount: addedUrls.length,
-        sample: addedUrls.slice(0, 3),
-        duplicatesDropped: duplicates,
-      });
-    } else if (duplicates > 0) {
+    if (duplicates > 0) {
       console.log('[DeepAnalysis] Frames dedup - dropped duplicates only', { duplicatesDropped: duplicates });
-    }
-    // start playback if not started
-    if (this.frames.length && !this.playbackTimer) {
-      this.startPlaybackTimer();
     }
   }
 
